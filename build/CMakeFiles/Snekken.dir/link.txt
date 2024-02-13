@@ -1,0 +1,1 @@
+/sbin/cc CMakeFiles/Snekken.dir/src/main.c.o -o Snekken  /home/ali/Projects/Snekken/libraylib.a -lm -ldl -lpthread -lrt 
