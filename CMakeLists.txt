@@ -4,9 +4,6 @@ project(Snekken C)
 # Set C standard
 set(CMAKE_C_STANDARD 11)
 
-# Include raylib
-include_directories(${CMAKE_SOURCE_DIR})
-
 # Add your source files
 set(SOURCES
     src/main.c
@@ -16,11 +13,14 @@ set(SOURCES
 # Create executable
 add_executable(Snekken ${SOURCES})
 
+# Include current directory
+target_include_directories(Snekken PRIVATE ${CMAKE_SOURCE_DIR})
+
 # Link raylib library
 target_link_libraries(Snekken "${CMAKE_SOURCE_DIR}/libraylib.a")
 
 # If you are on Linux, you might need to link additional libraries
 if(UNIX AND NOT APPLE)
-  target_link_libraries(Snekken m dl pthread rt)
+    target_link_libraries(Snekken m dl pthread rt)
 endif()
 
