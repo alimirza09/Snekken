@@ -1,0 +1,1 @@
+/nix/store/ln6zld1ia7rxddmxgbpfhrmb42rbxdw8-gcc-wrapper-13.2.0/bin/gcc CMakeFiles/Snekken.dir/src/main.c.o -o Snekken  /home/ali/Projects/Snekken/libraylib.a -lm -ldl -lpthread -lrt 
