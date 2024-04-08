@@ -44,10 +44,10 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /nix/store/paxnwg89pdx4car5fj84mmiprg952459-cmake-3.28.2/bin/cmake
+CMAKE_COMMAND = /nix/store/mbw6qprvn80p8k7z3lq44hnz6b332xf6-cmake-3.28.3/bin/cmake
 
 # The command to remove a file.
-RM = /nix/store/paxnwg89pdx4car5fj84mmiprg952459-cmake-3.28.2/bin/cmake -E rm -f
+RM = /nix/store/mbw6qprvn80p8k7z3lq44hnz6b332xf6-cmake-3.28.3/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
@@ -73,15 +73,15 @@ CMakeFiles/Snekken.dir/src/main.c.o: CMakeFiles/Snekken.dir/flags.make
 CMakeFiles/Snekken.dir/src/main.c.o: /home/ali/Projects/Snekken/src/main.c
 CMakeFiles/Snekken.dir/src/main.c.o: CMakeFiles/Snekken.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/ali/Projects/Snekken/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/Snekken.dir/src/main.c.o"
-	/nix/store/ln6zld1ia7rxddmxgbpfhrmb42rbxdw8-gcc-wrapper-13.2.0/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/Snekken.dir/src/main.c.o -MF CMakeFiles/Snekken.dir/src/main.c.o.d -o CMakeFiles/Snekken.dir/src/main.c.o -c /home/ali/Projects/Snekken/src/main.c
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/Snekken.dir/src/main.c.o -MF CMakeFiles/Snekken.dir/src/main.c.o.d -o CMakeFiles/Snekken.dir/src/main.c.o -c /home/ali/Projects/Snekken/src/main.c
 
 CMakeFiles/Snekken.dir/src/main.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/Snekken.dir/src/main.c.i"
-	/nix/store/ln6zld1ia7rxddmxgbpfhrmb42rbxdw8-gcc-wrapper-13.2.0/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/ali/Projects/Snekken/src/main.c > CMakeFiles/Snekken.dir/src/main.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/ali/Projects/Snekken/src/main.c > CMakeFiles/Snekken.dir/src/main.c.i
 
 CMakeFiles/Snekken.dir/src/main.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/Snekken.dir/src/main.c.s"
-	/nix/store/ln6zld1ia7rxddmxgbpfhrmb42rbxdw8-gcc-wrapper-13.2.0/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/ali/Projects/Snekken/src/main.c -o CMakeFiles/Snekken.dir/src/main.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/ali/Projects/Snekken/src/main.c -o CMakeFiles/Snekken.dir/src/main.c.s
 
 # Object files for target Snekken
 Snekken_OBJECTS = \
@@ -92,7 +92,7 @@ Snekken_EXTERNAL_OBJECTS =
 
 Snekken: CMakeFiles/Snekken.dir/src/main.c.o
 Snekken: CMakeFiles/Snekken.dir/build.make
-Snekken: /home/ali/Projects/Snekken/libraylib.a
+Snekken: /usr/local/lib/libraylib.a
 Snekken: CMakeFiles/Snekken.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/ali/Projects/Snekken/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking C executable Snekken"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Snekken.dir/link.txt --verbose=$(VERBOSE)

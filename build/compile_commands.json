@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/home/ali/Projects/Snekken/build",
+  "command": "/nix/store/ac1hb5dc2z4biwgy8mjrhlifffkkrvdq-gcc-wrapper-13.2.0/bin/gcc -I/home/ali/Projects/Snekken -g -std=gnu11 -o CMakeFiles/Snekken.dir/src/main.c.o -c /home/ali/Projects/Snekken/src/main.c",
+  "file": "/home/ali/Projects/Snekken/src/main.c",
+  "output": "CMakeFiles/Snekken.dir/src/main.c.o"
+}
+]

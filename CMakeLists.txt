@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
 project(Snekken C)
-
 # Set C standard
 set(CMAKE_C_STANDARD 11)
 
@@ -17,7 +16,7 @@ add_executable(Snekken ${SOURCES})
 target_include_directories(Snekken PRIVATE ${CMAKE_SOURCE_DIR})
 
 # Link raylib library
-target_link_libraries(Snekken "${CMAKE_SOURCE_DIR}/libraylib.a")
+target_link_libraries(Snekken "/usr/local/lib/libraylib.a")
 
 # If you are on Linux, you might need to link additional libraries
 if(UNIX AND NOT APPLE)
