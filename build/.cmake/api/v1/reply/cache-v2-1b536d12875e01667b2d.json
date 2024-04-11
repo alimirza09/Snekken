@@ -151,10 +151,10 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "C compiler"
+					"value" : "No help, variable specified on the command line."
 				}
 			],
-			"type" : "STRING",
+			"type" : "FILEPATH",
 			"value" : "/nix/store/ac1hb5dc2z4biwgy8mjrhlifffkkrvdq-gcc-wrapper-13.2.0/bin/gcc"
 		},
 		{
