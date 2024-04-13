@@ -12,12 +12,12 @@ int main(void)
 
   InitWindow(screenWidth, screenHeight, "Snekken");
   ChangeDirectory("..");
-  Vector2 rectanglePosition = {(float)screenWidth / 2, (float)screenHeight / 2};
+  // Vector2 rectanglePosition = {(float)screenWidth / 2, (float)screenHeight / 2};
   Image background = LoadImage("assets/background.png");
   ImageResizeNN(&background, 800, 30);
   Texture2D backgroundTexture = LoadTextureFromImage(background); // Image converted to texture, uploaded to GPU memory (VRAM)
   UnloadImage(background);                                        // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
-  Rectangle testRec = {0, 0, 50, 50};
+  Rectangle testRec = {screenWidth / 2 - 50, screenHeight / 2 - 50, 50, 50};
   Rectangle backgroundCollider = {0, 420, backgroundTexture.width, backgroundTexture.height};
   Vector2 velocity = {(float)0, (float)0};
   // Main game loop
