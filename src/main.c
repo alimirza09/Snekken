@@ -13,44 +13,59 @@ int main(void)
   InitWindow(screenWidth, screenHeight, "Snekken");
   ChangeDirectory("..");
   Vector2 rectanglePosition = {(float)screenWidth / 2, (float)screenHeight / 2};
-  Image background = LoadImage("assets/Enter-name.png");
-  ImageResizeNN(&background, 800, 150);
+  Image background = LoadImage("assets/background.png");
+  ImageResizeNN(&background, 800, 30);
   Texture2D backgroundTexture = LoadTextureFromImage(background); // Image converted to texture, uploaded to GPU memory (VRAM)
   UnloadImage(background);                                        // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
-
-  //--------------------------------------------------------------------------------------
-  int FPS;
+  Rectangle testRec = {0, 0, 50, 50};
+  Rectangle backgroundCollider = {0, 420, backgroundTexture.width, backgroundTexture.height};
+  Vector2 velocity = {(float)0, (float)0};
   // Main game loop
   while (!WindowShouldClose()) // Detect window close button or ESC key
   {
     // Update
     //----------------------------------------------------------------------------------
-    struct Rectangle testRec = {50, 50, rectanglePosition.x, rectanglePosition.y};
-    struct Rectangle backgroundCollider = {0, 300, backgroundTexture.width, backgroundTexture.height};
     float dt = GetFrameTime();
     if (IsKeyDown(KEY_D))
-      rectanglePosition.x += 100.0f * dt;
-    if (IsKeyDown(KEY_A))
-      rectanglePosition.x -= 100.0f * dt;
-    if (IsKeyDown(KEY_W))
-      rectanglePosition.y -= 95.0f * dt;
-    if (IsKeyDown(KEY_S) && !CheckCollisionRecs(backgroundCollider, testRec))
-      rectanglePosition.y += 100.0f * dt;
-    testRec.x = rectanglePosition.x;
-    testRec.y = rectanglePosition.y;
-    if (!CheckCollisionRecs(backgroundCollider, testRec))
     {
-      rectanglePosition.y += 5;
+      velocity.x += 10.0;
     }
-    printf("Rectangle (%f, %f)", rectanglePosition.x, rectanglePosition.y);
-    printf("Background(%d, %d)", backgroundTexture.height, backgroundTexture.width);
+    if (IsKeyDown(KEY_A))
+    {
+      velocity.x -= 10.0;
+    }
+    if (IsKeyDown(KEY_W) && CheckCollisionRecs(backgroundCollider, testRec))
+    {
+      velocity.y -= 10.0;
+    }
+    if (IsKeyDown(KEY_S) && !CheckCollisionRecs(backgroundCollider, testRec))
+    {
+      velocity.y += 10.0;
+    }
+    // Friction
+    if (velocity.x < 0)
+    {
+      velocity.x += 5;
+    }
+    if (velocity.x > 0)
+    {
+      velocity.x -= 5;
+    }
+    // Gravity
+    if (!CheckCollisionRecs(testRec, backgroundCollider))
+    {
+      velocity.y -= 10;
+    }
+    testRec.y += velocity.y * dt;
+    testRec.x += velocity.x * dt;
+    printf("Rectangle (%f, %f)", testRec.x, testRec.y);
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
     ClearBackground(RAYWHITE);
-    DrawTexture(backgroundTexture, 0, 300, WHITE);
+    DrawTexture(backgroundTexture, backgroundCollider.x, backgroundCollider.y, WHITE);
     DrawFPS(10, 10);
-    DrawRectangle(rectanglePosition.x, rectanglePosition.y, 50, 50, GOLD);
+    DrawRectangle(testRec.x, testRec.y, testRec.width, testRec.height, GOLD);
     EndDrawing();
     //----------------------------------------------------------------------------------
   }

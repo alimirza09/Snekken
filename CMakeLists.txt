@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.29)
+set(CMAKE_C_COMPILER /usr/bin/gcc) 
 project(Snekken C)
 # Set C standard
 set(CMAKE_C_STANDARD 11)
-
 # Add your source files
 set(SOURCES
     src/main.c
