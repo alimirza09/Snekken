@@ -1,5 +1,6 @@
 #include <raylib.h>
 #include <stdio.h>
+#include <stdbool.h>
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -16,10 +17,12 @@ int main(void)
   Image background = LoadImage("assets/background.png");
   ImageResizeNN(&background, 800, 30);
   Texture2D backgroundTexture = LoadTextureFromImage(background); // Image converted to texture, uploaded to GPU memory (VRAM)
-  UnloadImage(background);                                        // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
-  Rectangle testRec = {screenWidth / 2 - 50, screenHeight / 2 - 50, 50, 50};
-  Rectangle backgroundCollider = {0, 420, backgroundTexture.width, backgroundTexture.height};
+  UnloadImage(background);                               // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
+  Rectangle testRec = {400 - 50, 225 - 50, 50, 50};// Rectangle backgroundCollider = {0, 420, backgroundTexture.width, backgroundTexture.height};
+  Rectangle backgroundCollider={0, 420, 800,30};
   Vector2 velocity = {(float)0, (float)0};
+  bool debugMode = true;
+  Vector2 acceleration = {(float)0, (float)0};
   // Main game loop
   while (!WindowShouldClose()) // Detect window close button or ESC key
   {
@@ -32,15 +35,20 @@ int main(void)
     }
     if (IsKeyDown(KEY_A))
     {
-      velocity.x -= 10.0;
+      acceleration.x -= 10.0;
     }
     if (IsKeyDown(KEY_W) && CheckCollisionRecs(backgroundCollider, testRec))
     {
-      velocity.y -= 10.0;
+      acceleration.y -= 10.0;
     }
-    if (IsKeyDown(KEY_S) && !CheckCollisionRecs(backgroundCollider, testRec))
+    if (IsKeyDown(KEY_P))
     {
-      velocity.y += 10.0;
+      if(debugMode){
+        debugMode = false;
+      }
+      else{
+        debugMode = true;
+      }
     }
     // Friction
     if (velocity.x < 0)
@@ -51,14 +59,18 @@ int main(void)
     {
       velocity.x -= 5;
     }
+    velocity.x += acceleration.x;
+    velocity.y += acceleration.y;
     // Gravity
-    if (!CheckCollisionRecs(testRec, backgroundCollider))
+    if (testRec.y != backgroundCollider.y)
     {
-      velocity.y -= 10;
+      acceleration.y += 10;
     }
     testRec.y += velocity.y * dt;
     testRec.x += velocity.x * dt;
-    printf("Rectangle (%f, %f)", testRec.x, testRec.y);
+    if (debugMode){
+      printf("Rectangle (%f, %f)", testRec.x, testRec.y);
+    }
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
