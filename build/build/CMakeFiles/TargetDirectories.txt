@@ -1,0 +1,3 @@
+/home/ali/Projects/Snekken/build/build/CMakeFiles/Snekken.dir
+/home/ali/Projects/Snekken/build/build/CMakeFiles/edit_cache.dir
+/home/ali/Projects/Snekken/build/build/CMakeFiles/rebuild_cache.dir

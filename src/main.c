@@ -18,7 +18,7 @@ int main(void)
   ImageResizeNN(&background, 800, 30);
   Texture2D backgroundTexture = LoadTextureFromImage(background); // Image converted to texture, uploaded to GPU memory (VRAM)
   UnloadImage(background);                               // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
-  Rectangle testRec = {400 - 50, 225 - 50, 50, 50};// Rectangle backgroundCollider = {0, 420, backgroundTexture.width, backgroundTexture.height};
+  Rectangle testRec = {400 - 50, 420 - 50, 50, 50};// Rectangle backgroundCollider = {0, 420, backgroundTexture.width, backgroundTexture.height};
   Rectangle backgroundCollider={0, 420, 800,30};
   Vector2 velocity = {(float)0, (float)0};
   bool debugMode = true;
@@ -31,15 +31,15 @@ int main(void)
     float dt = GetFrameTime();
     if (IsKeyDown(KEY_D))
     {
-      velocity.x += 10.0;
+      acceleration.x += 1.0;
     }
     if (IsKeyDown(KEY_A))
     {
-      acceleration.x -= 10.0;
+      acceleration.x -= 1.0;
     }
     if (IsKeyDown(KEY_W) && CheckCollisionRecs(backgroundCollider, testRec))
     {
-      acceleration.y -= 10.0;
+      acceleration.y -= 1.0;
     }
     if (IsKeyDown(KEY_P))
     {
@@ -53,22 +53,23 @@ int main(void)
     // Friction
     if (velocity.x < 0)
     {
-      velocity.x += 5;
+      velocity.x += 2;
     }
     if (velocity.x > 0)
     {
-      velocity.x -= 5;
+      velocity.x -= 2;
     }
-    velocity.x += acceleration.x;
-    velocity.y += acceleration.y;
     // Gravity
     if (testRec.y != backgroundCollider.y)
     {
-      acceleration.y += 10;
+      acceleration.y += 0.01;
     }
+    velocity.x += acceleration.x;
+    velocity.y += acceleration.y;
     testRec.y += velocity.y * dt;
     testRec.x += velocity.x * dt;
-    if (debugMode){
+    if (debugMode)
+    {
       printf("Rectangle (%f, %f)", testRec.x, testRec.y);
     }
     // Draw
