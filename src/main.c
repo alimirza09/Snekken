@@ -1,11 +1,12 @@
 #include <raylib.h>
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
-int main(void)
-{
+int main(void) {
+  //----------------------------------------------------------------------------------
   // Initialization
   //--------------------------------------------------------------------------------------
   const int screenWidth = 800;
@@ -13,71 +14,85 @@ int main(void)
 
   InitWindow(screenWidth, screenHeight, "Snekken");
   ChangeDirectory("..");
-  // Vector2 rectanglePosition = {(float)screenWidth / 2, (float)screenHeight / 2};
   Image background = LoadImage("assets/background.png");
   ImageResizeNN(&background, 800, 30);
-  Texture2D backgroundTexture = LoadTextureFromImage(background); // Image converted to texture, uploaded to GPU memory (VRAM)
-  UnloadImage(background);                               // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
-  Rectangle testRec = {400 - 50, 420 - 50, 50, 50};// Rectangle backgroundCollider = {0, 420, backgroundTexture.width, backgroundTexture.height};
-  Rectangle backgroundCollider={0, 420, 800,30};
-  Vector2 velocity = {(float)0, (float)0};
+  Texture2D backgroundTexture = LoadTextureFromImage(background);
+  UnloadImage(background);
+
+  bool isGrounded = true;
+  Rectangle backgroundCollider = {0, 420, backgroundTexture.width,
+                                  backgroundTexture.height};
+  Rectangle testRec = {screenWidth / 2 - 50, backgroundCollider.y - 50, 50, 50};
+  Vector2 velocity = {0.0f, 0.0f};
   bool debugMode = true;
-  Vector2 acceleration = {(float)0, (float)0};
+  Vector2 acceleration = {0.0f, 0.0f};
+
   // Main game loop
-  while (!WindowShouldClose()) // Detect window close button or ESC key
-  {
+  while (!WindowShouldClose()) {
+    //----------------------------------------------------------------------------------
     // Update
     //----------------------------------------------------------------------------------
     float dt = GetFrameTime();
-    if (IsKeyDown(KEY_D))
-    {
-      acceleration.x += 1.0;
+
+    // Reset acceleration
+    acceleration = (Vector2){0.0f, 0.0f};
+
+    if (IsKeyDown(KEY_D)) {
+      acceleration.x += 1;
     }
-    if (IsKeyDown(KEY_A))
-    {
-      acceleration.x -= 1.0;
+    if (IsKeyDown(KEY_A)) {
+      acceleration.x -= 1;
     }
-    if (IsKeyDown(KEY_W) && CheckCollisionRecs(backgroundCollider, testRec))
-    {
-      acceleration.y -= 1.0;
+    if (IsKeyDown(KEY_W) && isGrounded) {
+      acceleration.y -= 90.0f;
+      isGrounded = false;
     }
-    if (IsKeyDown(KEY_P))
-    {
-      if(debugMode){
-        debugMode = false;
-      }
-      else{
-        debugMode = true;
-      }
+    if (IsKeyPressed(KEY_P)) {
+      debugMode = !debugMode;
     }
-    // Friction
-    if (velocity.x < 0)
-    {
-      velocity.x += 2;
+
+    // Apply gravity if not grounded
+    if (!isGrounded) {
+      acceleration.y += 0.6;
     }
-    if (velocity.x > 0)
-    {
-      velocity.x -= 2;
-    }
-    // Gravity
-    if (testRec.y != backgroundCollider.y)
-    {
-      acceleration.y += 0.01;
-    }
+
+    // Update velocity with acceleration
     velocity.x += acceleration.x;
     velocity.y += acceleration.y;
-    testRec.y += velocity.y * dt;
+
+    // Apply friction to the velocity
+    float friction = 0.99;  // Friction coefficient
+    velocity.x *= friction;
+
+    // Update position with velocity
     testRec.x += velocity.x * dt;
-    if (debugMode)
-    {
-      printf("Rectangle (%f, %f)", testRec.x, testRec.y);
+    testRec.y += velocity.y * dt;
+
+    // Check for collision with ground
+    if (CheckCollisionRecs(testRec, backgroundCollider)) {
+      testRec.y = backgroundCollider.y - testRec.height;
+      velocity.y = 0;
+      isGrounded = true;
+    } else {
+      isGrounded = false;
     }
+
+    if (debugMode) {
+      printf("Velocity (%f, %f)\n", velocity.x, velocity.y);
+    }
+
+    //----------------------------------------------------------------------------------
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
     ClearBackground(RAYWHITE);
-    DrawTexture(backgroundTexture, backgroundCollider.x, backgroundCollider.y, WHITE);
-    DrawFPS(10, 10);
+    DrawTexture(backgroundTexture, backgroundCollider.x, backgroundCollider.y,
+                WHITE);
+
+    if (debugMode) {
+      DrawFPS(10, 10);
+    }
+
     DrawRectangle(testRec.x, testRec.y, testRec.width, testRec.height, GOLD);
     EndDrawing();
     //----------------------------------------------------------------------------------
@@ -86,7 +101,7 @@ int main(void)
   // De-Initialization
   //-------------------------------------------------------------------------------------
   UnloadTexture(backgroundTexture);
-  CloseWindow(); // Close window and OpenGL context
+  CloseWindow();
   //--------------------------------------------------------------------------------------
 
   return 0;
