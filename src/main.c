@@ -39,7 +39,6 @@ int main(void) {
 
     InitWindow(screenWidth, screenHeight, "Snekken");
     
-    // Ensure directory change success
     ChangeDirectory(".."); 
     
     // Load background image
@@ -47,33 +46,43 @@ int main(void) {
     ImageResizeNN(&background, screenWidth, 30);
     Texture2D backgroundTexture = LoadTextureFromImage(background);
     UnloadImage(background);
-
-    bool isPlayer1Grounded = true;
-    bool isPlayer2Grounded = true;
     Rectangle backgroundCollider = {0, screenHeight - 30, backgroundTexture.width, backgroundTexture.height};
-    Rectangle player1Collider = {screenWidth / 2 - 25, backgroundCollider.y - 50, 50, 50};
+
+   // Player 1 
+   bool isPlayer1Grounded = true;
+    Image player1Image = LoadImage("assets/Enter-name.png");
+    ImageResizeNN(&player1Image, 70, 130);
+    Texture2D player1Texture = LoadTextureFromImage(player1Image);
+    Rectangle player1Collider = {screenWidth / 2.0f - 25, backgroundCollider.y - player1Image.height, player1Image.width, player1Image.height};
     Vector2 velocityPlayer1 = {0.0f, 0.0f};
-    Rectangle player2Collider = {screenWidth / 2 - 25, backgroundCollider.y - 50, 50, 50};
+    Vector2 accelerationPlayer1 = {0.0f, 0.0f}; 
+
+  // Player 2
+    bool isPlayer2Grounded = true;
+    Image player2Image = LoadImage("assets/Enter-name.png");
+    ImageResizeNN(&player2Image, 70,130);
+    ImageFlipHorizontal(&player2Image);
+    Texture2D player2Texture = LoadTextureFromImage(player2Image);
+  
+    Rectangle player2Collider = {screenWidth / 2.0f - 25, backgroundCollider.y - player2Image.height,player2Image.width , player2Image.height};
     Vector2 velocityPlayer2 = {0.0f, 0.0f};
-    bool debugMode = true;
-    Vector2 accelerationPlayer1 = {0.0f, 0.0f};
     Vector2 accelerationPlayer2 = {0.0f, 0.0f};
-    float friction = 0.99;  // Friction coefficient
+
+
+    // debugMode
+    bool debugMode = true;
+
+ // Friction coefficient
+    float friction = 0.99; 
 
     // Main game loop
     while (!WindowShouldClose()) {
-        //----------------------------------------------------------------------------------
-        // Update
-        //----------------------------------------------------------------------------------
+
         float dt = GetFrameTime();
         //----------------------------------------------------------------------------------
         // Player 1
         //----------------------------------------------------------------------------------
         accelerationPlayer1 = keyDetection(KEY_D, KEY_A, KEY_W, accelerationPlayer1, &isPlayer1Grounded);
-
-        if (IsKeyPressed(KEY_P)) {
-            debugMode = !debugMode;
-        }
 
         // Apply gravity if not grounded
         if (!isPlayer1Grounded) {
@@ -133,8 +142,6 @@ int main(void) {
         }
 
         //----------------------------------------------------------------------------------
-
-        //----------------------------------------------------------------------------------
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -145,8 +152,10 @@ int main(void) {
             DrawFPS(10, 10);
         }
 
-        DrawRectangle(player1Collider.x, player1Collider.y, player1Collider.width, player1Collider.height, GOLD);
-        DrawRectangle(player2Collider.x, player2Collider.y, player2Collider.width, player2Collider.height, RED);
+       //   DrawRectangle(player1Collider.x, player1Collider.y, player1Collider.width, player1Collider.height, GOLD);
+       //   DrawRectangle(player2Collider.x, player2Collider.y, player2Collider.width, player2Collider.height, RED);
+      DrawTexture(player1Texture,player1Collider.x,player1Collider.y,WHITE);
+      DrawTexture(player2Texture,player2Collider.x,player2Collider.y,WHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
