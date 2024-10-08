@@ -9,6 +9,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/ali/Projects/Snekken/src/main.c" "CMakeFiles/Snekken.dir/src/main.c.o" "gcc" "CMakeFiles/Snekken.dir/src/main.c.o.d"
+  "/home/ali/Projects/Snekken/src/snake.c" "CMakeFiles/Snekken.dir/src/snake.c.o" "gcc" "CMakeFiles/Snekken.dir/src/snake.c.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.
