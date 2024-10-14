@@ -82,6 +82,9 @@ int main() {
     if (!isPlayer1Grounded) {
       player1Acceleration.y += 0.9;
     }
+    if (IsKeyPressed(KEY_M)){
+      player1HP--; 
+    }
   
     if (IsKeyPressed(KEY_X) || snakeRunning){
       snakeRunning = true;
@@ -189,9 +192,10 @@ int main() {
 
       DrawTexture(player1Texture, player1Collider.x, player1Collider.y, WHITE);
       DrawTexture(player2Texture, player2Collider.x, player2Collider.y, WHITE);
-      DrawRectangleLines(50,50,81,11,LIGHTGRAY);
-      DrawRectangleGradientH(50, 50, 80, 10, (Color){255,51,65},RED);
-      DrawRectangleGradientH(50, 50, 80, 10, (Color){255,51,65},RED);
+      DrawRectangleLines(50,50,81,11,GRAY);
+      DrawRectangleGradientH(50, 50, player1HP-20, 10, (Color){255,51,65},RED);
+      DrawRectangleLines(screenWidth - 50 - 80, 50, 81, 11, GRAY);
+      DrawRectangleGradientH(screenWidth - 50 - 80, 50, player2HP-20, 10, (Color){255,51,65},RED);
     }
 
     EndDrawing();
