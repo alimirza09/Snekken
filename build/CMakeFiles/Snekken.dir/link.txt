@@ -1,1 +1,0 @@
-/usr/bin/gcc CMakeFiles/Snekken.dir/src/main.c.o CMakeFiles/Snekken.dir/src/snake.c.o -o Snekken  /usr/local/lib/libraylib.a -lm -ldl -lpthread -lrt
