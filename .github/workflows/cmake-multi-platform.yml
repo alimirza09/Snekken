@@ -31,9 +31,21 @@ jobs:
           rm -rf build
           mkdir build
 
-      - name: Install dependencies
+      - name: Install Raylib on Ubuntu
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev
+          sudo apt-get install -y libraylib-dev
+
+      - name: Install Raylib on macOS
+        if: matrix.os == 'macos-latest'
+        run: brew install raylib
+
+      - name: Install Raylib on Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install -y raylib
 
       - name: Configure CMake
         run: cmake -S . -B build
