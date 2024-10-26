@@ -26,6 +26,11 @@ jobs:
       - name: Set up CMake
         uses: jwlawson/actions-setup-cmake@v1
 
+      - name: Clean previous CMake cache and build files
+        run: |
+          rm -rf build
+          mkdir build
+
       - name: Install dependencies
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev
