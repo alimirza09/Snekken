@@ -26,9 +26,10 @@ jobs:
       - name: Set up CMake
         uses: jwlawson/actions-setup-cmake@v1
 
-      - name: Clean previous CMake cache and build files
+      - name: Clean previous build and cache files
         run: |
           rm -rf build
+          rm -f CMakeCache.txt
           mkdir build
 
       - name: Install Raylib on Ubuntu
@@ -51,7 +52,7 @@ jobs:
           choco install -y raylib
 
       - name: Configure CMake
-        run: cmake -S . -B build
+        run: cmake -S . -B build -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DCMAKE_C_COMPILER=${{ matrix.compiler == 'gcc' ? 'gcc' : 'clang' }} -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build build
