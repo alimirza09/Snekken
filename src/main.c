@@ -71,6 +71,8 @@ int main() {
   // Main game loop
   while (!WindowShouldClose()) {
     float dt = GetFrameTime();
+      cooldownTimer2 += 20*dt;
+      cooldownTimer1+=20*dt;
 
     //----------------------------------------------------------------------------------
     // Player 1
@@ -84,12 +86,10 @@ int main() {
 
     if (IsKeyPressed(KEY_V)) {
       playAnimation = 1;
-      player2HP -= 20;
     }
 
     if (IsKeyPressed(KEY_K)) {
       playAnimation2 = 1;
-      player1HP -= 20;
     }
 
     if (IsKeyPressed(KEY_X) || snakeRunning) {
@@ -191,12 +191,11 @@ int main() {
       if (debugMode) {
         DrawFPS(10, 10);
       }
-      cooldownTimer1+=1*dt;
 
       switch (playAnimation) {
 
         case 1:
-          if(cooldownTimer1 > 1000){
+          if(cooldownTimer1 > 20){
             if (timer > 20) {
               i++;
               timer = 0;
@@ -210,13 +209,16 @@ int main() {
                              (Rectangle){player1Collider.x, player1Collider.y, SpriteSize, SpriteSize}, (Vector2){0, 0}, -0.0f, WHITE);
             } 
             else {
-              playAnimation2 = 0;
+              playAnimation = 0;
               i = 1;
               player2Acceleration.x -= 50;
               player2Acceleration.y -= 30;
+              cooldownTimer1 = 0;
+              player2HP -= 20;
             }
           }
           else{
+            playAnimation = 0;
             break;
           }
         default:
@@ -224,12 +226,11 @@ int main() {
                          (Rectangle){player1Collider.x, player1Collider.y, SpriteSize, SpriteSize}, (Vector2){0, 0}, 0.0f, WHITE);
           break;
       }
-      cooldownTimer2 += 1*dt;
 
       switch (playAnimation2) {
 
         case 1:
-          if (cooldownTimer2 > 1000){ 
+          if (cooldownTimer2 > 20){ 
             if (timer > 20) {
               i++;
               timer = 0;
@@ -248,6 +249,7 @@ int main() {
               player1Acceleration.x -= 50;
               player1Acceleration.y -= 30;
               cooldownTimer2 = 0;
+              player1HP -= 20;
             }
           }
           else{
