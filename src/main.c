@@ -217,7 +217,7 @@ int main() {
               player2HP -= 20;
             }
           }
-          else{
+          else {
             playAnimation = 0;
             break;
           }
