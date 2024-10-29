@@ -11,6 +11,19 @@ Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
 Rectangle IsGroundedDetection(Rectangle PlayerCollider,
                               Rectangle backgroundCollider, float *velocityY,
                               bool *isGrounded);
+typedef struct Snake {
+  Vector2 position;
+  Vector2 size;
+  Vector2 speed;
+  Color color;
+} Snake;
+
+typedef struct Food {
+  Vector2 position;
+  Vector2 size;
+  bool active;
+  Color color;
+} Food;
 
 int main() {
   //----------------------------------------------------------------------------------
@@ -28,23 +41,26 @@ int main() {
   ImageResizeNN(&background, screenWidth, 30);
   Texture2D backgroundTexture = LoadTextureFromImage(background);
   UnloadImage(background);
-  Rectangle backgroundCollider = {0, screenHeight - 30, backgroundTexture.width, backgroundTexture.height};
+  Rectangle backgroundCollider = {0, screenHeight - 30, backgroundTexture.width,
+                                  backgroundTexture.height};
 
   //----------------------------------------------------------------------------------
   // Player 1
   //----------------------------------------------------------------------------------
   bool isPlayer1Grounded = true;
   Image player1Image = LoadImage("assets/EnterNameReworked.png");
-  int SpriteSize = 36 * 4;
+  const int SpriteSize = 36 * 4;
   ImageResizeNN(&player1Image, SpriteSize * 12, SpriteSize);
   Texture2D player1Texture = LoadTextureFromImage(player1Image);
-  Rectangle player1Collider = {screenWidth / 2.0f - 25, backgroundCollider.y - player1Image.height,
-    player1Image.width, player1Image.height};
+  Rectangle player1Collider = {screenWidth / 2.0f - 25,
+                               backgroundCollider.y - player1Image.height,
+                               player1Image.width, player1Image.height};
   Vector2 player1Velocity = {0.0f, 0.0f};
   Vector2 player1Acceleration = {0.0f, 0.0f};
   double player1HP = 100;
-  int cooldownTimer1 = 0;
+  int cooldownTimer1 = 100;
   int playAnimation = 0;
+  int player1FrameCounter = 1;
 
   //----------------------------------------------------------------------------------
   // Player 2
@@ -53,13 +69,16 @@ int main() {
   Image player2Image = LoadImage("assets/EnterNameReworked.png");
   ImageResizeNN(&player2Image, SpriteSize * 12, SpriteSize);
   Texture2D player2Texture = LoadTextureFromImage(player2Image);
-  Rectangle player2Collider = {screenWidth / 2.0f - 25, backgroundCollider.y - player2Image.height,
-    player2Image.width, player2Image.height};
+  Rectangle player2Collider = {screenWidth / 2.0f - 25,
+                               backgroundCollider.y - player2Image.height,
+                               player2Image.width, player2Image.height};
   Vector2 player2Velocity = {0.0f, 0.0f};
   Vector2 player2Acceleration = {0.0f, 0.0f};
   double player2HP = 100;
-  int cooldownTimer2 = 0;
+  int cooldownTimer2 = 100;
   int playAnimation2 = 0;
+  int player2FrameCounter = 1;
+  const double gravitationalForce = 4;
 
   // Debug mode and snake mode
   bool debugMode = true;
@@ -67,21 +86,37 @@ int main() {
 
   // Friction coefficient
   const float friction = 0.99;
+  // Snake Defines
+  static int framesCounter = 0;
+  static bool gameOver = false;
+  static bool pause = false;
+
+  static Food fruit = {0};
+  static Snake snake[SNAKE_LENGTH] = {0};
+  static Vector2 snakePosition[SNAKE_LENGTH] = {0};
+  static bool allowMove = false;
+  static Vector2 offset = {0};
+  static int counterTail = 2;
+
+  int player1AnimationTimer = 0;
+  int player2AnimationTimer = 0;
+  SetTargetFPS(60);
 
   // Main game loop
   while (!WindowShouldClose()) {
     float dt = GetFrameTime();
-      cooldownTimer2 += 20*dt;
-      cooldownTimer1+=20*dt;
+    cooldownTimer2 += 150 * dt;
+    cooldownTimer1 += 150 * dt;
 
     //----------------------------------------------------------------------------------
     // Player 1
     //----------------------------------------------------------------------------------
-    player1Acceleration = keyDetection(KEY_D, KEY_A, KEY_W, player1Acceleration, &isPlayer1Grounded);
+    player1Acceleration = keyDetection(KEY_D, KEY_A, KEY_W, player1Acceleration,
+                                       &isPlayer1Grounded);
 
     // Apply gravity if not grounded
     if (!isPlayer1Grounded) {
-      player1Acceleration.y += 0.9;
+      player1Acceleration.y += gravitationalForce;
     }
 
     if (IsKeyPressed(KEY_V)) {
@@ -94,34 +129,6 @@ int main() {
 
     if (IsKeyPressed(KEY_X) || snakeRunning) {
       snakeRunning = true;
-
-      typedef struct Snake {
-        Vector2 position;
-        Vector2 size;
-        Vector2 speed;
-        Color color;
-      } Snake;
-
-      typedef struct Food {
-        Vector2 position;
-        Vector2 size;
-        bool active;
-        Color color;
-      } Food;
-
-      static const int screenWidth = 800;
-      static const int screenHeight = 450;
-
-      static int framesCounter = 0;
-      static bool gameOver = false;
-      static bool pause = false;
-
-      static Food fruit = {0};
-      static Snake snake[SNAKE_LENGTH] = {0};
-      static Vector2 snakePosition[SNAKE_LENGTH] = {0};
-      static bool allowMove = false;
-      static Vector2 offset = {0};
-      static int counterTail = 2;
 
       UpdateDrawFrame();
     }
@@ -144,12 +151,15 @@ int main() {
     player1Collider.x += player1Velocity.x * dt;
     player1Collider.y += player1Velocity.y * dt;
 
-    player1Collider = IsGroundedDetection(player1Collider, backgroundCollider, &player1Velocity.y, &isPlayer1Grounded);
+    player1Collider =
+        IsGroundedDetection(player1Collider, backgroundCollider,
+                            &player1Velocity.y, &isPlayer1Grounded);
 
     //----------------------------------------------------------------------------------
     // Player 2
     //----------------------------------------------------------------------------------
-    player2Acceleration = keyDetection(KEY_RIGHT, KEY_LEFT, KEY_UP, player2Acceleration, &isPlayer2Grounded);
+    player2Acceleration = keyDetection(KEY_RIGHT, KEY_LEFT, KEY_UP,
+                                       player2Acceleration, &isPlayer2Grounded);
 
     if (IsKeyPressed(KEY_P)) {
       debugMode = !debugMode;
@@ -157,7 +167,7 @@ int main() {
 
     // Apply gravity if not grounded
     if (!isPlayer2Grounded) {
-      player2Acceleration.y += 0.9;
+      player2Acceleration.y += gravitationalForce;
     }
 
     // Update player2Velocity with player2Acceleration
@@ -174,18 +184,20 @@ int main() {
     player2Collider.x += player2Velocity.x * dt;
     player2Collider.y += player2Velocity.y * dt;
 
-    player2Collider = IsGroundedDetection(player2Collider, backgroundCollider, &player2Velocity.y, &isPlayer2Grounded);
+    player2Collider =
+        IsGroundedDetection(player2Collider, backgroundCollider,
+                            &player2Velocity.y, &isPlayer2Grounded);
 
     //----------------------------------------------------------------------------------
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
-    int i = 1;
-    int timer = 0;
 
     if (!snakeRunning) {
       ClearBackground(BLACK);
-      DrawRectangleGradientV(0, 0, screenWidth, screenHeight, (Color){77, 180, 227, 100}, (Color){68, 121, 227, 100});
+      DrawRectangleGradientV(0, 0, screenWidth, screenHeight,
+                             (Color){77, 180, 227, 100},
+                             (Color){68, 121, 227, 100});
       DrawTexture(backgroundTexture, 0, screenHeight - 30, WHITE);
 
       if (debugMode) {
@@ -194,78 +206,92 @@ int main() {
 
       switch (playAnimation) {
 
-        case 1:
-          if(cooldownTimer1 > 20){
-            if (timer > 20) {
-              i++;
-              timer = 0;
-            } 
-            else {
-              timer++;
-            }
+      case 1:
+        if (cooldownTimer1 >= 20) {
+          if (player1AnimationTimer > 20) {
+            player1FrameCounter++;
+            player1AnimationTimer = 0;
+          } else {
+            player1AnimationTimer++;
+          }
 
-            if (i < 11) {
-              DrawTexturePro(player1Texture, (Rectangle){SpriteSize * i, 0, SpriteSize, SpriteSize},
-                             (Rectangle){player1Collider.x, player1Collider.y, SpriteSize, SpriteSize}, (Vector2){0, 0}, -0.0f, WHITE);
-            } 
-            else {
-              playAnimation = 0;
-              i = 1;
-              player2Acceleration.x -= 50;
-              player2Acceleration.y -= 30;
-              cooldownTimer1 = 0;
-              player2HP -= 20;
-            }
-          }
-          else {
+          if (player1FrameCounter < 11) {
+            DrawTexturePro(player1Texture,
+                           (Rectangle){SpriteSize * player1FrameCounter, 0,
+                                       SpriteSize, SpriteSize},
+                           (Rectangle){player1Collider.x, player1Collider.y,
+                                       SpriteSize, SpriteSize},
+                           (Vector2){0, 0}, -0.0f, WHITE);
+          } else {
             playAnimation = 0;
-            break;
+            player1FrameCounter = 1;
+            player2Acceleration.x += 100;
+            player2Acceleration.y -= 30;
+            cooldownTimer1 = 0;
+            player2HP -= 20;
           }
-        default:
-          DrawTexturePro(player1Texture, (Rectangle){0, 0, SpriteSize, SpriteSize},
-                         (Rectangle){player1Collider.x, player1Collider.y, SpriteSize, SpriteSize}, (Vector2){0, 0}, 0.0f, WHITE);
+        } else {
+          playAnimation = 0;
           break;
+        }
+      default:
+        if (player1FrameCounter == 1) {
+          DrawTexturePro(player1Texture,
+                         (Rectangle){0, 0, SpriteSize, SpriteSize},
+                         (Rectangle){player1Collider.x, player1Collider.y,
+                                     SpriteSize, SpriteSize},
+                         (Vector2){0, 0}, 0.0f, WHITE);
+        }
+        break;
       }
 
       switch (playAnimation2) {
 
-        case 1:
-          if (cooldownTimer2 > 20){ 
-            if (timer > 20) {
-              i++;
-              timer = 0;
-            } 
-            else {
-              timer++;
-            }
+      case 1:
+        if (cooldownTimer2 >= 20) {
+          if (player2AnimationTimer > 20) {
+            player2FrameCounter++;
+            player2AnimationTimer = 0;
+          } else {
+            player2AnimationTimer++;
+          }
 
-            if (i < 11) {
-              DrawTexturePro(player2Texture, (Rectangle){SpriteSize * i, 0, -SpriteSize, SpriteSize},
-                             (Rectangle){player2Collider.x, player2Collider.y, SpriteSize, SpriteSize}, (Vector2){0, 0}, -0.0f, WHITE);
-            } 
-            else {
-              playAnimation2 = 0;
-              i = 1;
-              player1Acceleration.x -= 50;
-              player1Acceleration.y -= 30;
-              cooldownTimer2 = 0;
-              player1HP -= 20;
-            }
-          }
-          else{
+          if (player2FrameCounter < 11) {
+            DrawTexturePro(player2Texture,
+                           (Rectangle){SpriteSize * player2FrameCounter, 0,
+                                       -SpriteSize, SpriteSize},
+                           (Rectangle){player2Collider.x, player2Collider.y,
+                                       SpriteSize, SpriteSize},
+                           (Vector2){0, 0}, -0.0f, WHITE);
+          } else {
             playAnimation2 = 0;
-            break;
+            player2FrameCounter = 1;
+            player1Acceleration.x -= 100;
+            player1Acceleration.y -= 30;
+            cooldownTimer2 = 0;
+            player1HP -= 20;
           }
-        default:
-          DrawTexturePro(player2Texture, (Rectangle){0, 0, -SpriteSize, SpriteSize},
-                         (Rectangle){player2Collider.x, player2Collider.y, SpriteSize, SpriteSize}, (Vector2){0, 0}, -0.0f, WHITE);
+        } else {
+          playAnimation2 = 0;
           break;
+        }
+      default:
+        if (player2FrameCounter == 1) {
+          DrawTexturePro(player2Texture,
+                         (Rectangle){0, 0, -SpriteSize, SpriteSize},
+                         (Rectangle){player2Collider.x, player2Collider.y,
+                                     SpriteSize, SpriteSize},
+                         (Vector2){0, 0}, -0.0f, WHITE);
+        }
+        break;
       }
 
       DrawRectangleLines(50, 50, 81, 11, GRAY);
-      DrawRectangleGradientH(50, 50, player1HP - 20, 10, (Color){255, 51, 65, 100}, RED);
+      DrawRectangleGradientH(50, 50, player1HP - 20, 10,
+                             (Color){255, 51, 65, 100}, RED);
       DrawRectangleLines(screenWidth - 50 - 80, 50, 81, 11, GRAY);
-      DrawRectangleGradientH(screenWidth - 50 - 80, 50, player2HP - 20, 10, (Color){255, 51, 65, 100}, RED);
+      DrawRectangleGradientH(screenWidth - 50 - 80, 50, player2HP - 20, 10,
+                             (Color){255, 51, 65, 100}, RED);
     }
 
     EndDrawing();
@@ -275,7 +301,6 @@ int main() {
   UnloadTexture(backgroundTexture);
   UnloadTexture(player1Texture);
   UnloadTexture(player2Texture);
-  UnloadImage(background);
   UnloadImage(player1Image);
   UnloadImage(player2Image);
   CloseWindow();
@@ -285,7 +310,9 @@ int main() {
 
 //-------------------------------------------------------------------------------------
 
-Rectangle IsGroundedDetection(Rectangle PlayerCollider, Rectangle backgroundCollider, float *velocityY, bool *isGrounded) {
+Rectangle IsGroundedDetection(Rectangle PlayerCollider,
+                              Rectangle backgroundCollider, float *velocityY,
+                              bool *isGrounded) {
   if (CheckCollisionRecs(PlayerCollider, backgroundCollider)) {
     PlayerCollider.y = backgroundCollider.y - PlayerCollider.height;
     *velocityY = 0;
@@ -296,12 +323,13 @@ Rectangle IsGroundedDetection(Rectangle PlayerCollider, Rectangle backgroundColl
   return PlayerCollider;
 }
 
-Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3, Vector2 accelerationVector, bool *isGrounded) {
+Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
+                     Vector2 accelerationVector, bool *isGrounded) {
   if (IsKeyDown(key1)) {
-    accelerationVector.x += 1;
+    accelerationVector.x += 2;
   }
   if (IsKeyDown(key2)) {
-    accelerationVector.x -= 1;
+    accelerationVector.x -= 2;
   }
   if (IsKeyDown(key3) && *isGrounded) {
     accelerationVector.y -= 90.0f;
