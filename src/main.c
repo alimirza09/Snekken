@@ -61,6 +61,7 @@ int main() {
   int cooldownTimer1 = 100;
   int playAnimation = 0;
   int player1FrameCounter = 1;
+  int player1AnimationTimer = 0;
 
   //----------------------------------------------------------------------------------
   // Player 2
@@ -78,11 +79,13 @@ int main() {
   int cooldownTimer2 = 100;
   int playAnimation2 = 0;
   int player2FrameCounter = 1;
-  const double gravitationalForce = 4;
+  int player2AnimationTimer = 0;
 
   // Debug mode and snake mode
   bool debugMode = true;
   bool snakeRunning = false;
+
+  const double gravitationalForce = 4;
 
   // Friction coefficient
   const float friction = 0.99;
@@ -98,8 +101,6 @@ int main() {
   static Vector2 offset = {0};
   static int counterTail = 2;
 
-  int player1AnimationTimer = 0;
-  int player2AnimationTimer = 0;
   SetTargetFPS(60);
 
   // Main game loop
@@ -148,7 +149,9 @@ int main() {
     player1Velocity.x *= friction;
 
     // Update position with player1Velocity
-    player1Collider.x += player1Velocity.x * dt;
+    if (player1Collider.x > -50 || player1Velocity.x >= 0) {
+      player1Collider.x += player1Velocity.x * dt;
+    }
     player1Collider.y += player1Velocity.y * dt;
 
     player1Collider =
@@ -181,7 +184,9 @@ int main() {
     player2Velocity.x *= friction;
 
     // Update position with player2Velocity
-    player2Collider.x += player2Velocity.x * dt;
+    if (player2Collider.x < 700 || player2Velocity.x < 0) {
+      player2Collider.x += player2Velocity.x * dt;
+    }
     player2Collider.y += player2Velocity.y * dt;
 
     player2Collider =
@@ -194,104 +199,126 @@ int main() {
     BeginDrawing();
 
     if (!snakeRunning) {
-      ClearBackground(BLACK);
-      DrawRectangleGradientV(0, 0, screenWidth, screenHeight,
-                             (Color){77, 180, 227, 100},
-                             (Color){68, 121, 227, 100});
-      DrawTexture(backgroundTexture, 0, screenHeight - 30, WHITE);
+      if (player2HP == 0 || player1HP == 0) {
+        DrawText("GAME OVER", 30, screenHeight/2.5, 120,
+                 RED); // Draw text (using default font)
+      } else {
+        ClearBackground(BLACK);
+        DrawRectangleGradientV(0, 0, screenWidth, screenHeight,
+                               (Color){77, 180, 227, 100},
+                               (Color){68, 121, 227, 100});
+        DrawTexture(backgroundTexture, 0, screenHeight - 30, WHITE);
 
-      if (debugMode) {
-        DrawFPS(10, 10);
-      }
+        if (debugMode) {
+          DrawFPS(10, 10);
+          printf("player1Collider(%f, %f) \n", player1Collider.x,
+                 player1Collider.y);
+          printf("player2Collider(%f, %f) \n", player2Collider.x,
+                 player2Collider.y);
+          printf("player1Velocity(%f, %f) \n", player1Velocity.x,
+                 player1Velocity.y);
+          printf("player2Velocity(%f, %f) \n", player2Velocity.x,
+                 player2Velocity.y);
+          printf("player1Acceleration(%f, %f) \n", player1Acceleration.x,
+                 player1Acceleration.y);
+          printf("player1Acceleration(%f, %f) \n", player1Acceleration.x,
+                 player1Acceleration.y);
+          printf("Difference: %f \n", player1Collider.x - player2Collider.x);
+        }
 
-      switch (playAnimation) {
+        switch (playAnimation) {
 
-      case 1:
-        if (cooldownTimer1 >= 20) {
-          if (player1AnimationTimer > 20) {
-            player1FrameCounter++;
-            player1AnimationTimer = 0;
-          } else {
-            player1AnimationTimer++;
-          }
+        case 1:
+          if (cooldownTimer1 >= 20) {
+            if (player1AnimationTimer > 5) {
+              player1FrameCounter++;
+              player1AnimationTimer = 0;
+            } else {
+              player1AnimationTimer++;
+            }
 
-          if (player1FrameCounter < 11) {
-            DrawTexturePro(player1Texture,
-                           (Rectangle){SpriteSize * player1FrameCounter, 0,
-                                       SpriteSize, SpriteSize},
-                           (Rectangle){player1Collider.x, player1Collider.y,
-                                       SpriteSize, SpriteSize},
-                           (Vector2){0, 0}, -0.0f, WHITE);
+            if (player1FrameCounter < 11) {
+              DrawTexturePro(player1Texture,
+                             (Rectangle){SpriteSize * player1FrameCounter, 0,
+                                         SpriteSize, SpriteSize},
+                             (Rectangle){player1Collider.x, player1Collider.y,
+                                         SpriteSize, SpriteSize},
+                             (Vector2){0, 0}, -0.0f, WHITE);
+            } else {
+              playAnimation = 0;
+              player1FrameCounter = 1;
+              cooldownTimer1 = 0;
+              if ((player1Collider.x - player2Collider.x) > -50) {
+                player2HP -= 20;
+                player2Acceleration.x += 100;
+                player2Acceleration.y -= 30;
+              }
+            }
           } else {
             playAnimation = 0;
-            player1FrameCounter = 1;
-            player2Acceleration.x += 100;
-            player2Acceleration.y -= 30;
-            cooldownTimer1 = 0;
-            player2HP -= 20;
+            break;
           }
-        } else {
-          playAnimation = 0;
+        default:
+          if (player1FrameCounter == 1) {
+            DrawTexturePro(player1Texture,
+                           (Rectangle){0, 0, SpriteSize, SpriteSize},
+                           (Rectangle){player1Collider.x, player1Collider.y,
+                                       SpriteSize, SpriteSize},
+                           (Vector2){0, 0}, 0.0f, WHITE);
+          }
           break;
         }
-      default:
-        if (player1FrameCounter == 1) {
-          DrawTexturePro(player1Texture,
-                         (Rectangle){0, 0, SpriteSize, SpriteSize},
-                         (Rectangle){player1Collider.x, player1Collider.y,
-                                     SpriteSize, SpriteSize},
-                         (Vector2){0, 0}, 0.0f, WHITE);
-        }
-        break;
-      }
 
-      switch (playAnimation2) {
+        switch (playAnimation2) {
 
-      case 1:
-        if (cooldownTimer2 >= 20) {
-          if (player2AnimationTimer > 20) {
-            player2FrameCounter++;
-            player2AnimationTimer = 0;
+        case 1:
+          if (cooldownTimer2 >= 20) {
+            if (player2AnimationTimer > 5) {
+              player2FrameCounter++;
+              player2AnimationTimer = 0;
+            } else {
+              player2AnimationTimer++;
+            }
+
+            if (player2FrameCounter < 11) {
+              DrawTexturePro(player2Texture,
+                             (Rectangle){SpriteSize * player2FrameCounter, 0,
+                                         -SpriteSize, SpriteSize},
+                             (Rectangle){player2Collider.x, player2Collider.y,
+                                         SpriteSize, SpriteSize},
+                             (Vector2){0, 0}, -0.0f, WHITE);
+            } else {
+              playAnimation2 = 0;
+              player2FrameCounter = 1;
+              cooldownTimer2 = 0;
+              if ((player1Collider.x - player2Collider.x) > -50) {
+                player1HP -= 20;
+                player1Acceleration.x -= 100;
+                player1Acceleration.y -= 30;
+              }
+            }
           } else {
-            player2AnimationTimer++;
+            playAnimation2 = 0;
+            break;
           }
-
-          if (player2FrameCounter < 11) {
+        default:
+          if (player2FrameCounter == 1) {
             DrawTexturePro(player2Texture,
-                           (Rectangle){SpriteSize * player2FrameCounter, 0,
-                                       -SpriteSize, SpriteSize},
+                           (Rectangle){0, 0, -SpriteSize, SpriteSize},
                            (Rectangle){player2Collider.x, player2Collider.y,
                                        SpriteSize, SpriteSize},
                            (Vector2){0, 0}, -0.0f, WHITE);
-          } else {
-            playAnimation2 = 0;
-            player2FrameCounter = 1;
-            player1Acceleration.x -= 100;
-            player1Acceleration.y -= 30;
-            cooldownTimer2 = 0;
-            player1HP -= 20;
           }
-        } else {
-          playAnimation2 = 0;
           break;
         }
-      default:
-        if (player2FrameCounter == 1) {
-          DrawTexturePro(player2Texture,
-                         (Rectangle){0, 0, -SpriteSize, SpriteSize},
-                         (Rectangle){player2Collider.x, player2Collider.y,
-                                     SpriteSize, SpriteSize},
-                         (Vector2){0, 0}, -0.0f, WHITE);
-        }
-        break;
-      }
 
-      DrawRectangleLines(50, 50, 81, 11, GRAY);
-      DrawRectangleGradientH(50, 50, player1HP - 20, 10,
-                             (Color){255, 51, 65, 100}, RED);
-      DrawRectangleLines(screenWidth - 50 - 80, 50, 81, 11, GRAY);
-      DrawRectangleGradientH(screenWidth - 50 - 80, 50, player2HP - 20, 10,
-                             (Color){255, 51, 65, 100}, RED);
+        DrawRectangleLines(50, 50, 81, 11, GRAY);
+        DrawRectangleGradientH(50, 50, player1HP - 20, 10,
+                               (Color){255, 51, 65, 100}, RED);
+        DrawRectangleLines(screenWidth - 50 - 80, 50, 81, 11, GRAY);
+        DrawRectangleGradientH(screenWidth - 50 - 80, 50, player2HP - 20, 10,
+                               (Color){255, 51, 65, 100}, RED);
+      }
     }
 
     EndDrawing();
