@@ -7,7 +7,9 @@
 #define SQUARE_SIZE 31
 
 Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
-                     Vector2 accelerationVector, bool *isGrounded);
+                     KeyboardKey key4, KeyboardKey key5,
+                     Vector2 accelerationVector, bool *isGrounded,
+                     int *animation);
 Rectangle IsGroundedDetection(Rectangle PlayerCollider,
                               Rectangle backgroundCollider, float *velocityY,
                               bool *isGrounded);
@@ -31,10 +33,13 @@ int main() {
   //----------------------------------------------------------------------------------
   const int screenWidth = 800;
   const int screenHeight = 450;
+  //Load Icon Image
+  ChangeDirectory("..");
 
   InitWindow(screenWidth, screenHeight, "Snekken");
+  Image icon = LoadImage("assets/ICON.png");
+  SetWindowIcon(icon);
 
-  ChangeDirectory("..");
 
   // Load background image
   Image background = LoadImage("assets/background.png");
@@ -44,20 +49,21 @@ int main() {
   Rectangle backgroundCollider = {0, screenHeight - 30, backgroundTexture.width,
                                   backgroundTexture.height};
 
+
   //----------------------------------------------------------------------------------
   // Player 1
   //----------------------------------------------------------------------------------
   bool isPlayer1Grounded = true;
   Image player1Image = LoadImage("assets/EnterNameReworked.png");
   const int SpriteSize = 36 * 4;
-  ImageResizeNN(&player1Image, SpriteSize * 12, SpriteSize);
+  ImageResizeNN(&player1Image, SpriteSize * 12, SpriteSize * 2);
   Texture2D player1Texture = LoadTextureFromImage(player1Image);
   Rectangle player1Collider = {screenWidth / 2.0f - 25,
                                backgroundCollider.y - player1Image.height,
                                player1Image.width, player1Image.height};
   Vector2 player1Velocity = {0.0f, 0.0f};
   Vector2 player1Acceleration = {0.0f, 0.0f};
-  double player1HP = 100;
+  float player1HP = 100;
   int cooldownTimer1 = 100;
   int playAnimation = 0;
   int player1FrameCounter = 1;
@@ -68,14 +74,14 @@ int main() {
   //----------------------------------------------------------------------------------
   bool isPlayer2Grounded = true;
   Image player2Image = LoadImage("assets/EnterNameReworked.png");
-  ImageResizeNN(&player2Image, SpriteSize * 12, SpriteSize);
+  ImageResizeNN(&player2Image, SpriteSize * 12, SpriteSize * 2);
   Texture2D player2Texture = LoadTextureFromImage(player2Image);
   Rectangle player2Collider = {screenWidth / 2.0f - 25,
                                backgroundCollider.y - player2Image.height,
                                player2Image.width, player2Image.height};
   Vector2 player2Velocity = {0.0f, 0.0f};
   Vector2 player2Acceleration = {0.0f, 0.0f};
-  double player2HP = 100;
+  float player2HP = 100;
   int cooldownTimer2 = 100;
   int playAnimation2 = 0;
   int player2FrameCounter = 1;
@@ -85,7 +91,7 @@ int main() {
   bool debugMode = true;
   bool snakeRunning = false;
 
-  const double gravitationalForce = 4;
+  const float gravitationalForce = 4;
 
   // Friction coefficient
   const float friction = 0.99;
@@ -112,20 +118,13 @@ int main() {
     //----------------------------------------------------------------------------------
     // Player 1
     //----------------------------------------------------------------------------------
-    player1Acceleration = keyDetection(KEY_D, KEY_A, KEY_W, player1Acceleration,
-                                       &isPlayer1Grounded);
+    player1Acceleration =
+        keyDetection(KEY_D, KEY_A, KEY_W, KEY_C, KEY_V, player1Acceleration,
+                     &isPlayer1Grounded, &playAnimation);
 
     // Apply gravity if not grounded
     if (!isPlayer1Grounded) {
       player1Acceleration.y += gravitationalForce;
-    }
-
-    if (IsKeyPressed(KEY_V)) {
-      playAnimation = 1;
-    }
-
-    if (IsKeyPressed(KEY_K)) {
-      playAnimation2 = 1;
     }
 
     if (IsKeyPressed(KEY_X) || snakeRunning) {
@@ -161,8 +160,9 @@ int main() {
     //----------------------------------------------------------------------------------
     // Player 2
     //----------------------------------------------------------------------------------
-    player2Acceleration = keyDetection(KEY_RIGHT, KEY_LEFT, KEY_UP,
-                                       player2Acceleration, &isPlayer2Grounded);
+    player2Acceleration =
+        keyDetection(KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_K, KEY_L,
+                     player2Acceleration, &isPlayer2Grounded, &playAnimation2);
 
     if (IsKeyPressed(KEY_P)) {
       debugMode = !debugMode;
@@ -199,10 +199,14 @@ int main() {
     BeginDrawing();
 
     if (!snakeRunning) {
-      if (player2HP == 0 || player1HP == 0) {
-        DrawText("GAME OVER", 30, screenHeight/2.5, 120,
-                 RED); // Draw text (using default font)
-      } else {
+      if (player2HP <= 0) {
+        DrawText("PLAYER 1 WINS", 30, screenHeight / 2.5, 120, RED);
+      } 
+      else if (player1HP <= 0){
+        DrawText("PLAYER 2 WINS", 30, screenHeight / 2.5, 120, RED);
+      }
+      else {
+
         ClearBackground(BLACK);
         DrawRectangleGradientV(0, 0, screenWidth, screenHeight,
                                (Color){77, 180, 227, 100},
@@ -224,6 +228,8 @@ int main() {
           printf("player1Acceleration(%f, %f) \n", player1Acceleration.x,
                  player1Acceleration.y);
           printf("Difference: %f \n", player1Collider.x - player2Collider.x);
+          printf("playAnimation: %d \n", playAnimation);
+          printf("playAnimation2: %d \n", playAnimation2);
         }
 
         switch (playAnimation) {
@@ -241,8 +247,9 @@ int main() {
               DrawTexturePro(player1Texture,
                              (Rectangle){SpriteSize * player1FrameCounter, 0,
                                          SpriteSize, SpriteSize},
-                             (Rectangle){player1Collider.x, player1Collider.y,
-                                         SpriteSize, SpriteSize},
+                             (Rectangle){player1Collider.x,
+                                         player1Collider.y * 2 + 12, SpriteSize,
+                                         SpriteSize},
                              (Vector2){0, 0}, -0.0f, WHITE);
             } else {
               playAnimation = 0;
@@ -251,20 +258,53 @@ int main() {
               if ((player1Collider.x - player2Collider.x) > -50) {
                 player2HP -= 20;
                 player2Acceleration.x += 100;
-                player2Acceleration.y -= 30;
+                player2Acceleration.y -= 90;
               }
             }
           } else {
             playAnimation = 0;
             break;
           }
+          break;
+        case 2:
+          if (cooldownTimer1 >= 50) {
+            if (player1AnimationTimer > 5) {
+              player1FrameCounter++;
+              player1AnimationTimer = 0;
+            } else {
+              player1AnimationTimer++;
+            }
+
+            if (player1FrameCounter < 7) {
+              DrawTexturePro(player1Texture,
+                             (Rectangle){SpriteSize * player1FrameCounter,
+                                         SpriteSize, SpriteSize, SpriteSize},
+                             (Rectangle){player1Collider.x,
+                                         player1Collider.y * 2 + 12, SpriteSize,
+                                         SpriteSize},
+                             (Vector2){0, 0}, -0.0f, WHITE);
+            } else {
+              playAnimation = 0;
+              player1FrameCounter = 1;
+              cooldownTimer1 = 0;
+              if ((player1Collider.x - player2Collider.x) > -50) {
+                player2HP -= 20;
+                player2Acceleration.x += 150;
+                player2Acceleration.y -= 90;
+              }
+            }
+          } else {
+            playAnimation = 0;
+          }
+          break;
+
         default:
           if (player1FrameCounter == 1) {
-            DrawTexturePro(player1Texture,
-                           (Rectangle){0, 0, SpriteSize, SpriteSize},
-                           (Rectangle){player1Collider.x, player1Collider.y,
-                                       SpriteSize, SpriteSize},
-                           (Vector2){0, 0}, 0.0f, WHITE);
+            DrawTexturePro(
+                player1Texture, (Rectangle){0, 0, SpriteSize, SpriteSize},
+                (Rectangle){player1Collider.x, player1Collider.y * 2 + 12,
+                            SpriteSize, SpriteSize},
+                (Vector2){0, 0}, 0.0f, WHITE);
           }
           break;
         }
@@ -284,8 +324,9 @@ int main() {
               DrawTexturePro(player2Texture,
                              (Rectangle){SpriteSize * player2FrameCounter, 0,
                                          -SpriteSize, SpriteSize},
-                             (Rectangle){player2Collider.x, player2Collider.y,
-                                         SpriteSize, SpriteSize},
+                             (Rectangle){player2Collider.x,
+                                         player2Collider.y * 2 + 12, SpriteSize,
+                                         SpriteSize},
                              (Vector2){0, 0}, -0.0f, WHITE);
             } else {
               playAnimation2 = 0;
@@ -301,13 +342,46 @@ int main() {
             playAnimation2 = 0;
             break;
           }
+          break;
+        case 2:
+          if (cooldownTimer2 >= 50) {
+            if (player2AnimationTimer > 5) {
+              player2FrameCounter++;
+              player2AnimationTimer = 0;
+            } else {
+              player2AnimationTimer++;
+            }
+
+            if (player2FrameCounter < 7) {
+              DrawTexturePro(player2Texture,
+                             (Rectangle){SpriteSize * player2FrameCounter,
+                                         SpriteSize, -SpriteSize, SpriteSize},
+                             (Rectangle){player2Collider.x,
+                                         player2Collider.y * 2 + 12, SpriteSize,
+                                         SpriteSize},
+                             (Vector2){0, 0}, -0.0f, WHITE);
+            } else {
+              playAnimation2 = 0;
+              player2FrameCounter = 1;
+              cooldownTimer2 = 0;
+              if ((player1Collider.x - player2Collider.x) > -50) {
+                player1HP -= 30;
+                player1Acceleration.x -= 150;
+                player1Acceleration.y -= 90;
+              }
+            }
+          } else {
+            playAnimation2 = 0;
+            break;
+          }
+          break;
         default:
           if (player2FrameCounter == 1) {
-            DrawTexturePro(player2Texture,
-                           (Rectangle){0, 0, -SpriteSize, SpriteSize},
-                           (Rectangle){player2Collider.x, player2Collider.y,
-                                       SpriteSize, SpriteSize},
-                           (Vector2){0, 0}, -0.0f, WHITE);
+            DrawTexturePro(
+                player2Texture, (Rectangle){0, 0, -SpriteSize, SpriteSize},
+                (Rectangle){player2Collider.x, player2Collider.y * 2 + 12,
+                            SpriteSize, SpriteSize},
+                (Vector2){0, 0}, -0.0f, WHITE);
           }
           break;
         }
@@ -351,7 +425,9 @@ Rectangle IsGroundedDetection(Rectangle PlayerCollider,
 }
 
 Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
-                     Vector2 accelerationVector, bool *isGrounded) {
+                     KeyboardKey key4, KeyboardKey key5,
+                     Vector2 accelerationVector, bool *isGrounded,
+                     int *animation) {
   if (IsKeyDown(key1)) {
     accelerationVector.x += 2;
   }
@@ -361,6 +437,12 @@ Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
   if (IsKeyDown(key3) && *isGrounded) {
     accelerationVector.y -= 90.0f;
     *isGrounded = false;
+  }
+  if (IsKeyPressed(key4)) {
+    *animation = 1;
+  }
+  if (IsKeyPressed(key5)) {
+    *animation = 2;
   }
   return accelerationVector;
 }
