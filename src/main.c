@@ -13,6 +13,9 @@ Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
 Rectangle IsGroundedDetection(Rectangle PlayerCollider,
                               Rectangle backgroundCollider, float *velocityY,
                               bool *isGrounded);
+Vector2 UpdatePosition(Vector2 accelerationVector, Vector2 velocityVector,
+                       Rectangle *Collider, Rectangle Collider2, float friction,
+                       float dt, int playerNumber);
 typedef struct Snake {
   Vector2 position;
   Vector2 size;
@@ -33,13 +36,12 @@ int main() {
   //----------------------------------------------------------------------------------
   const int screenWidth = 800;
   const int screenHeight = 450;
-  //Load Icon Image
+  // Load Icon Image
   ChangeDirectory("..");
 
   InitWindow(screenWidth, screenHeight, "Snekken");
   Image icon = LoadImage("assets/ICON.png");
   SetWindowIcon(icon);
-
 
   // Load background image
   Image background = LoadImage("assets/background.png");
@@ -49,7 +51,6 @@ int main() {
   Rectangle backgroundCollider = {0, screenHeight - 30, backgroundTexture.width,
                                   backgroundTexture.height};
 
-
   //----------------------------------------------------------------------------------
   // Player 1
   //----------------------------------------------------------------------------------
@@ -58,9 +59,9 @@ int main() {
   const int SpriteSize = 36 * 4;
   ImageResizeNN(&player1Image, SpriteSize * 12, SpriteSize * 2);
   Texture2D player1Texture = LoadTextureFromImage(player1Image);
-  Rectangle player1Collider = {screenWidth / 2.0f - 25,
-                               backgroundCollider.y - player1Image.height,
-                               player1Image.width, player1Image.height};
+  Rectangle player1Collider = {screenWidth / 2.0f - SpriteSize * 2,
+                               backgroundCollider.y - SpriteSize - 2,
+                               SpriteSize - 45, SpriteSize};
   Vector2 player1Velocity = {0.0f, 0.0f};
   Vector2 player1Acceleration = {0.0f, 0.0f};
   float player1HP = 100;
@@ -77,8 +78,8 @@ int main() {
   ImageResizeNN(&player2Image, SpriteSize * 12, SpriteSize * 2);
   Texture2D player2Texture = LoadTextureFromImage(player2Image);
   Rectangle player2Collider = {screenWidth / 2.0f - 25,
-                               backgroundCollider.y - player2Image.height,
-                               player2Image.width, player2Image.height};
+                               backgroundCollider.y - SpriteSize - 2,
+                               SpriteSize - 35, SpriteSize};
   Vector2 player2Velocity = {0.0f, 0.0f};
   Vector2 player2Acceleration = {0.0f, 0.0f};
   float player2HP = 100;
@@ -88,7 +89,7 @@ int main() {
   int player2AnimationTimer = 0;
 
   // Debug mode and snake mode
-  bool debugMode = true;
+  bool debugMode = false;
   bool snakeRunning = false;
 
   const float gravitationalForce = 4;
@@ -114,7 +115,6 @@ int main() {
     float dt = GetFrameTime();
     cooldownTimer2 += 150 * dt;
     cooldownTimer1 += 150 * dt;
-
     //----------------------------------------------------------------------------------
     // Player 1
     //----------------------------------------------------------------------------------
@@ -136,23 +136,10 @@ int main() {
     if (IsKeyPressed(KEY_Y)) {
       snakeRunning = false;
     }
-
-    // Update player1Velocity with player1Acceleration
-    player1Velocity.x += player1Acceleration.x;
-    player1Velocity.y += player1Acceleration.y;
-
-    // Reset player1Acceleration
-    player1Acceleration = (Vector2){0.0f, 0.0f};
-
-    // Apply friction to player1Velocity
-    player1Velocity.x *= friction;
-
-    // Update position with player1Velocity
-    if (player1Collider.x > -50 || player1Velocity.x >= 0) {
-      player1Collider.x += player1Velocity.x * dt;
-    }
-    player1Collider.y += player1Velocity.y * dt;
-
+    player1Velocity =
+        UpdatePosition(player1Acceleration, player1Velocity, &player1Collider,
+                       player2Collider, friction, dt, 1);
+    player1Acceleration = (Vector2){0, 0};
     player1Collider =
         IsGroundedDetection(player1Collider, backgroundCollider,
                             &player1Velocity.y, &isPlayer1Grounded);
@@ -173,21 +160,10 @@ int main() {
       player2Acceleration.y += gravitationalForce;
     }
 
-    // Update player2Velocity with player2Acceleration
-    player2Velocity.x += player2Acceleration.x;
-    player2Velocity.y += player2Acceleration.y;
-
-    // Reset player2Acceleration
-    player2Acceleration = (Vector2){0.0f, 0.0f};
-
-    // Apply friction to player2Velocity
-    player2Velocity.x *= friction;
-
-    // Update position with player2Velocity
-    if (player2Collider.x < 700 || player2Velocity.x < 0) {
-      player2Collider.x += player2Velocity.x * dt;
-    }
-    player2Collider.y += player2Velocity.y * dt;
+    player2Velocity =
+        UpdatePosition(player2Acceleration, player2Velocity, &player2Collider,
+                       player1Collider, friction, dt, 2);
+    player2Acceleration = (Vector2){0, 0};
 
     player2Collider =
         IsGroundedDetection(player2Collider, backgroundCollider,
@@ -200,12 +176,10 @@ int main() {
 
     if (!snakeRunning) {
       if (player2HP <= 0) {
-        DrawText("PLAYER 1 WINS", 30, screenHeight / 2.5, 120, RED);
-      } 
-      else if (player1HP <= 0){
-        DrawText("PLAYER 2 WINS", 30, screenHeight / 2.5, 120, RED);
-      }
-      else {
+        DrawText("PLAYER 1 WINS", 28, screenHeight / 2.5, 90, RED);
+      } else if (player1HP <= 0) {
+        DrawText("PLAYER 2 WINS", 28, screenHeight / 2.5, 90, RED);
+      } else {
 
         ClearBackground(BLACK);
         DrawRectangleGradientV(0, 0, screenWidth, screenHeight,
@@ -227,16 +201,16 @@ int main() {
                  player1Acceleration.y);
           printf("player1Acceleration(%f, %f) \n", player1Acceleration.x,
                  player1Acceleration.y);
-          printf("Difference: %f \n", player1Collider.x - player2Collider.x);
           printf("playAnimation: %d \n", playAnimation);
           printf("playAnimation2: %d \n", playAnimation2);
+          printf("dt: %f \n", dt);
         }
 
         switch (playAnimation) {
 
         case 1:
           if (cooldownTimer1 >= 20) {
-            if (player1AnimationTimer > 5) {
+            if (player1AnimationTimer > 3) {
               player1FrameCounter++;
               player1AnimationTimer = 0;
             } else {
@@ -247,9 +221,8 @@ int main() {
               DrawTexturePro(player1Texture,
                              (Rectangle){SpriteSize * player1FrameCounter, 0,
                                          SpriteSize, SpriteSize},
-                             (Rectangle){player1Collider.x,
-                                         player1Collider.y * 2 + 12, SpriteSize,
-                                         SpriteSize},
+                             (Rectangle){player1Collider.x, player1Collider.y,
+                                         SpriteSize, SpriteSize},
                              (Vector2){0, 0}, -0.0f, WHITE);
             } else {
               playAnimation = 0;
@@ -268,7 +241,7 @@ int main() {
           break;
         case 2:
           if (cooldownTimer1 >= 50) {
-            if (player1AnimationTimer > 5) {
+            if (player1AnimationTimer > 7) {
               player1FrameCounter++;
               player1AnimationTimer = 0;
             } else {
@@ -279,15 +252,15 @@ int main() {
               DrawTexturePro(player1Texture,
                              (Rectangle){SpriteSize * player1FrameCounter,
                                          SpriteSize, SpriteSize, SpriteSize},
-                             (Rectangle){player1Collider.x,
-                                         player1Collider.y * 2 + 12, SpriteSize,
-                                         SpriteSize},
+                             (Rectangle){player1Collider.x, player1Collider.y,
+                                         SpriteSize, SpriteSize},
                              (Vector2){0, 0}, -0.0f, WHITE);
             } else {
               playAnimation = 0;
               player1FrameCounter = 1;
               cooldownTimer1 = 0;
-              if ((player1Collider.x - player2Collider.x) > -50) {
+              if ((player1Collider.x - player2Collider.x) > -50 &&
+                  (player1Collider.x - player2Collider.x) < 50) {
                 player2HP -= 20;
                 player2Acceleration.x += 150;
                 player2Acceleration.y -= 90;
@@ -300,11 +273,11 @@ int main() {
 
         default:
           if (player1FrameCounter == 1) {
-            DrawTexturePro(
-                player1Texture, (Rectangle){0, 0, SpriteSize, SpriteSize},
-                (Rectangle){player1Collider.x, player1Collider.y * 2 + 12,
-                            SpriteSize, SpriteSize},
-                (Vector2){0, 0}, 0.0f, WHITE);
+            DrawTexturePro(player1Texture,
+                           (Rectangle){0, 0, SpriteSize, SpriteSize},
+                           (Rectangle){player1Collider.x, player1Collider.y,
+                                       SpriteSize, SpriteSize},
+                           (Vector2){0, 0}, 0.0f, WHITE);
           }
           break;
         }
@@ -313,7 +286,7 @@ int main() {
 
         case 1:
           if (cooldownTimer2 >= 20) {
-            if (player2AnimationTimer > 5) {
+            if (player2AnimationTimer > 3) {
               player2FrameCounter++;
               player2AnimationTimer = 0;
             } else {
@@ -324,9 +297,8 @@ int main() {
               DrawTexturePro(player2Texture,
                              (Rectangle){SpriteSize * player2FrameCounter, 0,
                                          -SpriteSize, SpriteSize},
-                             (Rectangle){player2Collider.x,
-                                         player2Collider.y * 2 + 12, SpriteSize,
-                                         SpriteSize},
+                             (Rectangle){player2Collider.x, player2Collider.y,
+                                         SpriteSize, SpriteSize},
                              (Vector2){0, 0}, -0.0f, WHITE);
             } else {
               playAnimation2 = 0;
@@ -345,7 +317,7 @@ int main() {
           break;
         case 2:
           if (cooldownTimer2 >= 50) {
-            if (player2AnimationTimer > 5) {
+            if (player2AnimationTimer > 7) {
               player2FrameCounter++;
               player2AnimationTimer = 0;
             } else {
@@ -356,15 +328,15 @@ int main() {
               DrawTexturePro(player2Texture,
                              (Rectangle){SpriteSize * player2FrameCounter,
                                          SpriteSize, -SpriteSize, SpriteSize},
-                             (Rectangle){player2Collider.x,
-                                         player2Collider.y * 2 + 12, SpriteSize,
-                                         SpriteSize},
+                             (Rectangle){player2Collider.x, player2Collider.y,
+                                         SpriteSize, SpriteSize},
                              (Vector2){0, 0}, -0.0f, WHITE);
             } else {
               playAnimation2 = 0;
               player2FrameCounter = 1;
               cooldownTimer2 = 0;
-              if ((player1Collider.x - player2Collider.x) > -50) {
+              if ((player1Collider.x - player2Collider.x) > -50 &&
+                  (player1Collider.x - player2Collider.x) < 50) {
                 player1HP -= 30;
                 player1Acceleration.x -= 150;
                 player1Acceleration.y -= 90;
@@ -379,7 +351,7 @@ int main() {
           if (player2FrameCounter == 1) {
             DrawTexturePro(
                 player2Texture, (Rectangle){0, 0, -SpriteSize, SpriteSize},
-                (Rectangle){player2Collider.x, player2Collider.y * 2 + 12,
+                (Rectangle){player2Collider.x - 48, player2Collider.y,
                             SpriteSize, SpriteSize},
                 (Vector2){0, 0}, -0.0f, WHITE);
           }
@@ -387,11 +359,19 @@ int main() {
         }
 
         DrawRectangleLines(50, 50, 81, 11, GRAY);
+        DrawText("PLAYER 1", 50, 40, 5, RAYWHITE);
         DrawRectangleGradientH(50, 50, player1HP - 20, 10,
                                (Color){255, 51, 65, 100}, RED);
         DrawRectangleLines(screenWidth - 50 - 80, 50, 81, 11, GRAY);
+        DrawText("PLAYER 2", screenWidth - 50 - 80, 40, 5, RAYWHITE);
         DrawRectangleGradientH(screenWidth - 50 - 80, 50, player2HP - 20, 10,
                                (Color){255, 51, 65, 100}, RED);
+        DrawRectangleLines(player1Collider.x, player1Collider.y,
+                           player1Collider.width, player1Collider.height,
+                           RAYWHITE);
+        DrawRectangleLines(player2Collider.x, player2Collider.y,
+                           player2Collider.width, player2Collider.height,
+                           RAYWHITE);
       }
     }
 
@@ -445,4 +425,30 @@ Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
     *animation = 2;
   }
   return accelerationVector;
+}
+Vector2 UpdatePosition(Vector2 accelerationVector, Vector2 velocityVector,
+                       Rectangle *Collider, Rectangle Collider2, float friction,
+                       float dt, int playerNumber) {
+
+  // Update velocityVector with accelerationVector
+  velocityVector.x += accelerationVector.x;
+  velocityVector.y += accelerationVector.y;
+
+  // Apply friction to velocityVector
+  velocityVector.x *= friction;
+  if (playerNumber == 1) {
+    if (!CheckCollisionRecs(*Collider, Collider2) || velocityVector.x <= 0) {
+      Collider->x += velocityVector.x * dt;
+    } else {
+      velocityVector.x = 0;
+    }
+  } else {
+    if (!CheckCollisionRecs(*Collider, Collider2) || velocityVector.x >= 0) {
+      Collider->x += velocityVector.x * dt;
+    } else {
+      velocityVector.x = 0;
+    }
+  }
+  Collider->y += velocityVector.y * dt;
+  return velocityVector;
 }
