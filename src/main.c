@@ -86,7 +86,7 @@ int main() {
   // Player 1
   //----------------------------------------------------------------------------------
   Image player1Image = LoadImage("assets/EnterNameReworked.png");
-  ImageResizeNN(&player1Image, SPRITE_SIZE * 12, SPRITE_SIZE * 2);
+  ImageResizeNN(&player1Image, SPRITE_SIZE * 12, SPRITE_SIZE * 3);
   Texture2D player1Texture = LoadTextureFromImage(player1Image);
   Rectangle player1Collider = {screenWidth / 2.0f - SPRITE_SIZE,
                                backgroundCollider.y - SPRITE_SIZE - 2,
@@ -99,7 +99,7 @@ int main() {
   // Player 2
   //----------------------------------------------------------------------------------
   Image player2Image = LoadImage("assets/EnterNameReworked.png");
-  ImageResizeNN(&player2Image, SPRITE_SIZE * 12, SPRITE_SIZE * 2);
+  ImageResizeNN(&player2Image, SPRITE_SIZE * 12, SPRITE_SIZE * 3);
   Texture2D player2Texture = LoadTextureFromImage(player2Image);
   Rectangle player2Collider = {screenWidth / 2.0f + 25,
                                backgroundCollider.y - SPRITE_SIZE - 2,
