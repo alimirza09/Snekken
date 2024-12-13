@@ -1,4 +1,3 @@
-#include "snake.h"
 #include <raylib.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -31,7 +30,6 @@ typedef struct {
   Vector2 acceleration;
   Vector2 velocity;
   int hp;
-  float spriteOffsetX;
   bool isGrounded;
 } Player;
 
@@ -57,7 +55,6 @@ void UpdatePlayerAnimation(Player *player, int maxFrames, int frameRow, bool fli
 void HandlePlayerAnimation(Player *player, Player *opponent, int animationType, int maxFrames,
                            int cooldown, int hpReduction,int xAccel, int yAccel,
                            int frameRow, bool flip);
-void DrawDefaultFrame(Player *player, bool flip);
 
 const int screenWidth = 800;
 const int screenHeight = 450;
@@ -93,7 +90,7 @@ int main() {
                                SPRITE_SIZE - 48, SPRITE_SIZE};
   Player player1 = {
       0,   0,0, 100, player1Texture, player1Collider, {0.0f, 0.0f}, {0.0f, 0.0f},
-      100, 0, true};
+      100, true};
 
   //----------------------------------------------------------------------------------
   // Player 2
@@ -106,7 +103,7 @@ int main() {
                                SPRITE_SIZE - 36, SPRITE_SIZE};
   Player player2 = {
       0,   0,0, 100, player2Texture, player2Collider, {0.0f, 0.0f}, {0.0f, 0.0f},
-      100, 0, true};
+      100, true};
 
   // Debug mode and snake mode
   bool debugMode = false;
@@ -116,17 +113,6 @@ int main() {
 
   // Friction coefficient
   const float friction = 0.99;
-  // Snake Defines
-  static int framesCounter = 0;
-  static bool gameOver = false;
-  static bool pause = false;
-
-  static Food fruit = {0};
-  static Snake snake[SNAKE_LENGTH] = {0};
-  static Vector2 snakePosition[SNAKE_LENGTH] = {0};
-  static bool allowMove = false;
-  static Vector2 offset = {0};
-  static int counterTail = 2;
 
   SetTargetFPS(60);
 
@@ -145,16 +131,6 @@ int main() {
     // Apply gravity if not grounded
     if (!player1.isGrounded) {
       player1.acceleration.y += gravitationalForce;
-    }
-
-    if (IsKeyPressed(KEY_X) || snakeRunning) {
-      snakeRunning = true;
-
-      UpdateDrawFrame();
-    }
-
-    if (IsKeyPressed(KEY_Y)) {
-      snakeRunning = false;
     }
     player1.velocity =
         UpdatePosition(player1.acceleration, player1.velocity,
@@ -223,6 +199,8 @@ int main() {
                  player1.acceleration.y);
           printf("player1.animation: %d \n", player1.animation);
           printf("player2.animation: %d \n", player2.animation);
+          printf("player1.frameCounter: %d \n", player1.frameCounter);
+          printf("player2.frameCounter: %d \n", player2.frameCounter);
           printf("dt: %f \n", dt);
           printf("player1.hp: %d \n", player1.hp);
           printf("player2.hp: %d \n", player2.hp);
@@ -235,6 +213,11 @@ int main() {
         case 2:
             HandlePlayerAnimation(&player1, &player2, 2, 7, 50, 20, 150, -90, 1, false);
             break;
+          case 3:
+            HandlePlayerAnimation(&player1, &player2, 3, 7,
+                                  0, 0,0, 0,
+                                  2, false);
+          break;
         default:
             DrawPlayerAnimation(&player1, 0, false);
             break;
@@ -247,6 +230,11 @@ int main() {
         case 2:
             HandlePlayerAnimation(&player2, &player1, 2, 7, 50, 30, -150, -90, 1, true);
             break;
+          case 3:
+            HandlePlayerAnimation(&player2, &player1, 3, 7,
+                                  0, 0,0, 0,
+                                  2, true);
+          break;
         default:
             DrawPlayerAnimation(&player2, 0, true);
             break;
@@ -289,8 +277,6 @@ int main() {
   return 0;
 }
 
-//-------------------------------------------------------------------------------------
-
 Rectangle IsGroundedDetection(Rectangle PlayerCollider,
                               Rectangle backgroundCollider, float *velocityY,
                               bool *isGrounded) {
@@ -317,6 +303,7 @@ Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
   if (IsKeyDown(key3) && *isGrounded) {
     accelerationVector.y -= 90.0f;
     *isGrounded = false;
+    *animation = 3;
   }
   if (IsKeyPressed(key4)) {
     *animation = 1;
@@ -373,18 +360,10 @@ void DrawPlayerAnimation(Player *player, int frameRow, bool flip) {
                                player->collider.y, SPRITE_SIZE, SPRITE_SIZE},
                    (Vector2){0, 0}, 0.0f, WHITE);
 }
-void DrawDefaultFrame(Player *player, bool flip) {
-    int flipModifier = flip ? -1 : 1;
-    DrawTexturePro(player->texture,
-                   (Rectangle){0, 0, flipModifier * SPRITE_SIZE, SPRITE_SIZE},
-                   (Rectangle){player->collider.x + (flip ? -48 : 0),
-                               player->collider.y, SPRITE_SIZE, SPRITE_SIZE},
-                   (Vector2){0, 0}, 0.0f, WHITE);
-}
 
 // Function to handle animation updates
 void UpdatePlayerAnimation(Player *player, int maxFrames, int frameRow, bool flip) {
-    if (player->animationTimer > (player->animation == 1 ? 3 : 7)) {
+    if (player->animationTimer > 3) {
         player->frameCounter++;
         player->animationTimer = 0;
     } else {
@@ -392,10 +371,17 @@ void UpdatePlayerAnimation(Player *player, int maxFrames, int frameRow, bool fli
     }
 
     if (player->frameCounter < maxFrames) {
-        DrawPlayerAnimation(player, frameRow, flip);
+    int flipModifier = flip ? -1 : 1;
+    DrawTexturePro(player->texture,
+                   (Rectangle){SPRITE_SIZE * player->frameCounter,
+                               frameRow * SPRITE_SIZE,
+                               flipModifier * SPRITE_SIZE, SPRITE_SIZE},
+                   (Rectangle){player->collider.x + (flip ? -48 : 0),
+                               player->collider.y, SPRITE_SIZE, SPRITE_SIZE},
+                   (Vector2){0, 0}, 0.0f, WHITE);
     } else {
         player->animation = 0;
-        player->frameCounter = 1;
+        player->frameCounter = 0;
         player->cooldownTimer = 0;
     }
 }
