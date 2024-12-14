@@ -56,6 +56,7 @@ void HandlePlayerAnimation(Player *player, Player *opponent, int animationType, 
                            int cooldown, int hpReduction,int xAccel, int yAccel,
                            int frameRow, bool flip);
 
+Texture2D SafeLoadTexture(const char *filename);
 const int screenWidth = 800;
 const int screenHeight = 450;
 
@@ -82,9 +83,7 @@ int main() {
   //----------------------------------------------------------------------------------
   // Player 1
   //----------------------------------------------------------------------------------
-  Image player1Image = LoadImage("assets/EnterNameReworked.png");
-  ImageResizeNN(&player1Image, SPRITE_SIZE * 12, SPRITE_SIZE * 3);
-  Texture2D player1Texture = LoadTextureFromImage(player1Image);
+  Texture2D player1Texture = SafeLoadTexture("assets/EnterNameReworked.png");
   Rectangle player1Collider = {screenWidth / 2.0f - SPRITE_SIZE,
                                backgroundCollider.y - SPRITE_SIZE - 2,
                                SPRITE_SIZE - 48, SPRITE_SIZE};
@@ -95,9 +94,7 @@ int main() {
   //----------------------------------------------------------------------------------
   // Player 2
   //----------------------------------------------------------------------------------
-  Image player2Image = LoadImage("assets/EnterNameReworked.png");
-  ImageResizeNN(&player2Image, SPRITE_SIZE * 12, SPRITE_SIZE * 3);
-  Texture2D player2Texture = LoadTextureFromImage(player2Image);
+  Texture2D player2Texture = SafeLoadTexture("assets/EnterNameReworked.png");
   Rectangle player2Collider = {screenWidth / 2.0f + 25,
                                backgroundCollider.y - SPRITE_SIZE - 2,
                                SPRITE_SIZE - 36, SPRITE_SIZE};
@@ -204,6 +201,7 @@ int main() {
           printf("dt: %f \n", dt);
           printf("player1.hp: %d \n", player1.hp);
           printf("player2.hp: %d \n", player2.hp);
+          printf("player1.isGrounded: %d \n", player1.isGrounded);
         }
 
     switch (player1.animation) {
@@ -270,8 +268,6 @@ int main() {
   UnloadTexture(backgroundTexture);
   UnloadTexture(player1.texture);
   UnloadTexture(player2.texture);
-  UnloadImage(player1Image);
-  UnloadImage(player2Image);
   CloseWindow();
 
   return 0;
@@ -301,8 +297,6 @@ Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
     accelerationVector.x -= 2;
   }
   if (IsKeyDown(key3) && *isGrounded) {
-    accelerationVector.y -= 90.0f;
-    *isGrounded = false;
     *animation = 3;
   }
   if (IsKeyPressed(key4)) {
@@ -361,15 +355,29 @@ void DrawPlayerAnimation(Player *player, int frameRow, bool flip) {
                    (Vector2){0, 0}, 0.0f, WHITE);
 }
 
-// Function to handle animation updates
 void UpdatePlayerAnimation(Player *player, int maxFrames, int frameRow, bool flip) {
-    if (player->animationTimer > 3) {
-        player->frameCounter++;
-        player->animationTimer = 0;
-    } else {
-        player->animationTimer++;
+  if (player->animationTimer > 3 && frameRow != 2) {
+    player->frameCounter++;
+    player->animationTimer = 0;
+  }
+  else if(player->animationTimer > 6 && frameRow == 2){
+    if(player->frameCounter < 3 || player->frameCounter >= 5){
+      player->frameCounter++;
+      player->animationTimer = 0;
     }
-
+    else if((player -> frameCounter <= 6 && player->frameCounter > 3) && player->isGrounded){
+      player->frameCounter++;
+      player->animationTimer = 0;
+    }
+    else if(player->frameCounter == 3){
+      player->acceleration.y-=100.0f;
+      player->isGrounded=false;
+      player->frameCounter++;
+    }
+  }
+  else {
+    player->animationTimer++;
+  }
     if (player->frameCounter < maxFrames) {
     int flipModifier = flip ? -1 : 1;
     DrawTexturePro(player->texture,
@@ -384,7 +392,7 @@ void UpdatePlayerAnimation(Player *player, int maxFrames, int frameRow, bool fli
         player->frameCounter = 0;
         player->cooldownTimer = 0;
     }
-}
+  }
 void HandlePlayerAnimation(Player *player, Player *opponent, int animationType, int maxFrames,
                            int cooldown, int hpReduction, int xAccel, int yAccel,
                            int frameRow, bool flip) {
@@ -403,4 +411,16 @@ void HandlePlayerAnimation(Player *player, Player *opponent, int animationType, 
         player->animation = 0;
     }
 }
-
+Texture2D SafeLoadTexture(const char *filename) {
+    if (FileExists(filename)) {
+        Image image = LoadImage(filename);
+        ImageResizeNN(&image, SPRITE_SIZE * 12, SPRITE_SIZE * 3);
+        if (image.data != NULL) {
+            Texture2D texture = LoadTextureFromImage(image);
+            UnloadImage(image);
+            return texture;
+        }
+    }
+    TraceLog(LOG_ERROR, "Failed to load texture: %s", filename);
+    return (Texture2D){0}; // Return a null/invalid texture
+}
