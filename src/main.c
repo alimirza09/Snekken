@@ -4,6 +4,13 @@
 
 #define SPRITE_SIZE 36 * 4
 
+typedef struct Snake {
+  Vector2 position;
+  Vector2 size;
+  Vector2 speed;
+  Color color;
+} Snake;
+
 typedef struct Food {
   Vector2 position;
   Vector2 size;
@@ -24,7 +31,6 @@ typedef struct {
   bool isGrounded;
 } Player;
 
-// Function prototypes
 Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
                      KeyboardKey key4, KeyboardKey key5,
                      Vector2 accelerationVector, bool *isGrounded,
@@ -51,17 +57,18 @@ void HandlePlayerAnimation(Player *player, Player *opponent, int animationType,
 
 Texture2D SafeLoadTexture(const char *filename);
 
-// Screen dimensions
 const int screenWidth = 800;
 const int screenHeight = 450;
 
 int main() {
+  //----------------------------------------------------------------------------------
   // Initialization
-  ChangeDirectory("~/Projects/Snekken/");
+  //----------------------------------------------------------------------------------
+
+  // Load Icon Image
+  ChangeDirectory("..");
 
   InitWindow(screenWidth, screenHeight, "Snekken");
-
-  // Load window icon
   Image icon = LoadImage("assets/ICON.png");
   SetWindowIcon(icon);
 
@@ -70,51 +77,51 @@ int main() {
   ImageResizeNN(&background, screenWidth, 30);
   Texture2D backgroundTexture = LoadTextureFromImage(background);
   UnloadImage(background);
-
   Rectangle backgroundCollider = {0, screenHeight - 30, backgroundTexture.width,
                                   backgroundTexture.height};
 
-  // Player 1 initialization
+  //----------------------------------------------------------------------------------
+  // Player 1
+  //----------------------------------------------------------------------------------
   Texture2D player1Texture = SafeLoadTexture("assets/EnterNameReworked.png");
   Rectangle player1Collider = {screenWidth / 2.0f - SPRITE_SIZE,
                                backgroundCollider.y - SPRITE_SIZE - 2,
                                SPRITE_SIZE - 48, SPRITE_SIZE};
+  Player player1 = {0,
+                    0,
+                    0,
+                    100,
+                    player1Texture,
+                    player1Collider,
+                    {0.0f, 0.0f},
+                    {0.0f, 0.0f},
+                    100,
+                    true};
 
-  Player player1 = {
-      0,   // animationTimer
-      0,   // frameCounter
-      0,   // animation
-      100, // cooldownTimer
-      player1Texture,
-      player1Collider,
-      {0.0f, 0.0f}, // acceleration
-      {0.0f, 0.0f}, // velocity
-      100,          // hp
-      true          // isGrounded
-  };
-
-  // Player 2 initialization
+  //----------------------------------------------------------------------------------
+  // Player 2
+  //----------------------------------------------------------------------------------
   Texture2D player2Texture = SafeLoadTexture("assets/EnterNameReworked.png");
   Rectangle player2Collider = {screenWidth / 2.0f + 25,
                                backgroundCollider.y - SPRITE_SIZE - 2,
                                SPRITE_SIZE - 36, SPRITE_SIZE};
+  Player player2 = {0,
+                    0,
+                    0,
+                    100,
+                    player2Texture,
+                    player2Collider,
+                    {0.0f, 0.0f},
+                    {0.0f, 0.0f},
+                    100,
+                    true};
 
-  Player player2 = {
-      0,   // animationTimer
-      0,   // frameCounter
-      0,   // animation
-      100, // cooldownTimer
-      player2Texture,
-      player2Collider,
-      {0.0f, 0.0f}, // acceleration
-      {0.0f, 0.0f}, // velocity
-      100,          // hp
-      true          // isGrounded
-  };
-
-  // Game settings
+  // Debug mode and snake mode
   bool debugMode = false;
+
   const float gravitationalForce = 4;
+
+  // Friction coefficient
   const float friction = 0.99;
 
   SetTargetFPS(60);
@@ -122,12 +129,11 @@ int main() {
   // Main game loop
   while (!WindowShouldClose()) {
     float dt = GetFrameTime();
-
-    // Update cooldown timers
     player2.cooldownTimer += 150 * dt;
     player1.cooldownTimer += 150 * dt;
-
-    // Player 1 input and physics
+    //----------------------------------------------------------------------------------
+    // Player 1
+    //----------------------------------------------------------------------------------
     player1.acceleration =
         keyDetection(KEY_D, KEY_A, KEY_W, KEY_C, KEY_V, player1.acceleration,
                      &player1.isGrounded, &player1.animation);
@@ -136,23 +142,21 @@ int main() {
     if (!player1.isGrounded) {
       player1.acceleration.y += gravitationalForce;
     }
-
     player1.velocity =
         UpdatePosition(player1.acceleration, player1.velocity,
                        &player1.collider, player2.collider, friction, dt, 1);
-
     player1.acceleration = (Vector2){0, 0};
-
     player1.collider =
         IsGroundedDetection(player1.collider, backgroundCollider,
                             &player1.velocity.y, &player1.isGrounded);
 
-    // Player 2 input and physics
+    //----------------------------------------------------------------------------------
+    // Player 2
+    //----------------------------------------------------------------------------------
     player2.acceleration = keyDetection(
         KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_K, KEY_L, player2.acceleration,
         &player2.isGrounded, &player2.animation);
 
-    // Toggle debug mode
     if (IsKeyPressed(KEY_P)) {
       debugMode = !debugMode;
     }
@@ -165,32 +169,29 @@ int main() {
     player2.velocity =
         UpdatePosition(player2.acceleration, player2.velocity,
                        &player2.collider, player1.collider, friction, dt, 2);
-
     player2.acceleration = (Vector2){0, 0};
 
     player2.collider =
         IsGroundedDetection(player2.collider, backgroundCollider,
                             &player2.velocity.y, &player2.isGrounded);
 
-    // Drawing
+    //----------------------------------------------------------------------------------
+    // Draw
+    //----------------------------------------------------------------------------------
     BeginDrawing();
 
-    // Game over conditions
     if (player2.hp <= 0) {
       DrawText("PLAYER 1 WINS", 28, screenHeight / 2.5, 90, RED);
     } else if (player1.hp <= 0) {
       DrawText("PLAYER 2 WINS", 28, screenHeight / 2.5, 90, RED);
     } else {
-      ClearBackground(BLACK);
 
-      // Background gradient
+      ClearBackground(BLACK);
       DrawRectangleGradientV(0, 0, screenWidth, screenHeight,
                              (Color){77, 180, 227, 100},
                              (Color){68, 121, 227, 100});
-
       DrawTexture(backgroundTexture, 0, screenHeight - 30, WHITE);
 
-      // Debug information
       if (debugMode) {
         DrawFPS(10, 10);
         printf("player1.collider(%f, %f) \n", player1.collider.x,
@@ -214,72 +215,67 @@ int main() {
         printf("player2.hp: %d \n", player2.hp);
         printf("player1.isGrounded: %d \n", player1.isGrounded);
       }
+
+      switch (player1.animation) {
+      case 1:
+        HandlePlayerAnimation(&player1, &player2, 1, 11, 20, 0, 100, -90, 0,
+                              false);
+        break;
+      case 2:
+        HandlePlayerAnimation(&player1, &player2, 2, 7, 50, 20, 150, -90, 1,
+                              false);
+        break;
+      case 3:
+        HandlePlayerAnimation(&player1, &player2, 3, 7, 0, 0, 0, 0, 2, false);
+        break;
+      default:
+        DrawPlayerAnimation(&player1, 0, false);
+        break;
+      }
+
+      switch (player2.animation) {
+      case 1:
+        HandlePlayerAnimation(&player2, &player1, 1, 11, 20, 20, -100, -30, 0,
+                              true);
+        break;
+      case 2:
+        HandlePlayerAnimation(&player2, &player1, 2, 7, 50, 30, -150, -90, 1,
+                              true);
+        break;
+      case 3:
+        HandlePlayerAnimation(&player2, &player1, 3, 7, 0, 0, 0, 0, 2, true);
+        break;
+      default:
+        DrawPlayerAnimation(&player2, 0, true);
+        break;
+      }
+
+      // HP Draw
+      DrawRectangleLines(50, 50, 81, 11, GRAY);
+      DrawRectangleLines(screenWidth - 50 - 80, 50, 100 / 1.22, 11, GRAY);
+      DrawRectangleGradientH(50, 50, player1.hp / 1.249, 10,
+                             (Color){255, 51, 65, 100}, RED);
+      DrawRectangleGradientH(screenWidth - 50 - 80, 50, player2.hp / 1.249, 10,
+                             (Color){255, 51, 65, 100}, RED);
+
+      // Player Identifier draw
+      DrawText("PLAYER 1", 50, 40, 5, RAYWHITE);
+      DrawText("PLAYER 2", screenWidth - 50 - 80, 40, 5, RAYWHITE);
+      // Colliders draw
+      if (debugMode) {
+        DrawRectangleLines(player1.collider.x, player1.collider.y,
+                           player1.collider.width, player1.collider.height,
+                           RAYWHITE);
+        DrawRectangleLines(player2.collider.x, player2.collider.y,
+                           player2.collider.width, player2.collider.height,
+                           RAYWHITE);
+      }
     }
 
-    // Player 1 animation handling
-    switch (player1.animation) {
-    case 1:
-      HandlePlayerAnimation(&player1, &player2, 1, 11, 20, 0, 100, -90, 0,
-                            false);
-      break;
-    case 2:
-      HandlePlayerAnimation(&player1, &player2, 2, 7, 50, 20, 150, -90, 1,
-                            false);
-      break;
-    case 3:
-      HandlePlayerAnimation(&player1, &player2, 3, 7, 0, 0, 0, 0, 2, false);
-      break;
-    default:
-      DrawPlayerAnimation(&player1, 0, false);
-      break;
-    }
-
-    // Player 2 animation handling
-    switch (player2.animation) {
-    case 1:
-      HandlePlayerAnimation(&player2, &player1, 1, 11, 20, 20, -100, -30, 0,
-                            true);
-      break;
-    case 2:
-      HandlePlayerAnimation(&player2, &player1, 2, 7, 50, 30, -150, -90, 1,
-                            true);
-      break;
-    case 3:
-      HandlePlayerAnimation(&player2, &player1, 3, 7, 0, 0, 0, 0, 2, true);
-      break;
-    default:
-      DrawPlayerAnimation(&player2, 0, true);
-      break;
-    }
-
-    // HP Bar Drawing
-    DrawRectangleLines(50, 50, 81, 11, GRAY);
-    DrawRectangleLines(screenWidth - 50 - 80, 50, 100 / 1.22, 11, GRAY);
-
-    DrawRectangleGradientH(50, 50, player1.hp / 1.249, 10,
-                           (Color){255, 51, 65, 100}, RED);
-
-    DrawRectangleGradientH(screenWidth - 50 - 80, 50, player2.hp / 1.249, 10,
-                           (Color){255, 51, 65, 100}, RED);
-
-    // Player Identifiers
-    DrawText("PLAYER 1", 50, 40, 5, RAYWHITE);
-    DrawText("PLAYER 2", screenWidth - 50 - 80, 40, 5, RAYWHITE);
-
-    // Debug collider drawing
-    if (debugMode) {
-      DrawRectangleLines(player1.collider.x, player1.collider.y,
-                         player1.collider.width, player1.collider.height,
-                         RAYWHITE);
-      DrawRectangleLines(player2.collider.x, player2.collider.y,
-                         player2.collider.width, player2.collider.height,
-                         RAYWHITE);
-    }
+    EndDrawing();
   }
 
-  EndDrawing();
-
-  // Cleanup
+  // De-Initialization
   UnloadTexture(backgroundTexture);
   UnloadTexture(player1.texture);
   UnloadTexture(player2.texture);
@@ -287,6 +283,7 @@ int main() {
 
   return 0;
 }
+
 Rectangle IsGroundedDetection(Rectangle PlayerCollider,
                               Rectangle backgroundCollider, float *velocityY,
                               bool *isGrounded) {
@@ -390,21 +387,27 @@ void UpdatePlayerAnimation(Player *player, int maxFrames, int frameRow,
   } else {
     player->animationTimer++;
   }
-  if (player->frameCounter < maxFrames) {
+
+  if (player->frameCounter <= maxFrames) {
     int flipModifier = flip ? -1 : 1;
     DrawTexturePro(player->texture,
-                   (Rectangle){SPRITE_SIZE * player->frameCounter,
+                   (Rectangle){SPRITE_SIZE * (player->frameCounter == maxFrames
+                                                  ? maxFrames - 1
+                                                  : player->frameCounter),
                                frameRow * SPRITE_SIZE,
                                flipModifier * SPRITE_SIZE, SPRITE_SIZE},
                    (Rectangle){player->collider.x + (flip ? -48 : 0),
                                player->collider.y, SPRITE_SIZE, SPRITE_SIZE},
                    (Vector2){0, 0}, 0.0f, WHITE);
-  } else {
+  }
+
+  if (player->frameCounter >= maxFrames) {
     player->animation = 0;
     player->frameCounter = 0;
     player->cooldownTimer = 0;
   }
 }
+
 void HandlePlayerAnimation(Player *player, Player *opponent, int animationType,
                            int maxFrames, int cooldown, int hpReduction,
                            int xAccel, int yAccel, int frameRow, bool flip) {
@@ -423,6 +426,7 @@ void HandlePlayerAnimation(Player *player, Player *opponent, int animationType,
     player->animation = 0;
   }
 }
+
 Texture2D SafeLoadTexture(const char *filename) {
   if (FileExists(filename)) {
     Image image = LoadImage(filename);
