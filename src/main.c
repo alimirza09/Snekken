@@ -245,7 +245,7 @@ int main() {
 
       switch (player1.animation) {
       case 1:
-        HandlePlayerAnimation(&player1, &player2, 1, 11, 20, 20, 100, -90, 0,
+        HandlePlayerAnimation(&player1, &player2, 1, 11, 20, 0, 100, -90, 0,
                               false);
         break;
       case 2:
@@ -265,7 +265,6 @@ int main() {
         HandlePlayerAnimation(&player2, &player1, 1, 11, 20, 20, -100, -30, 0,
                               true);
         break;
-      case 2:
         HandlePlayerAnimation(&player2, &player1, 2, 7, 55, 40, -150, -90, 1,
                               true);
         break;
