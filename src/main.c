@@ -1,6 +1,7 @@
 #include <raylib.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #define SPRITE_SIZE 36 * 4
 
@@ -33,8 +34,7 @@ typedef struct {
 
 Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
                      KeyboardKey key4, KeyboardKey key5,
-                     Vector2 accelerationVector, bool *isGrounded,
-                     int *animation);
+                     Player *player);
 
 Rectangle IsGroundedDetection(Rectangle PlayerCollider,
                               Rectangle backgroundCollider, float *velocityY,
@@ -131,12 +131,40 @@ int main() {
     float dt = GetFrameTime();
     player2.cooldownTimer += 150 * dt;
     player1.cooldownTimer += 150 * dt;
+    if(IsKeyPressed(KEY_R)){
+
+  player1Collider = (Rectangle){screenWidth / 2.0f - SPRITE_SIZE,
+                               backgroundCollider.y - SPRITE_SIZE - 2,
+                               SPRITE_SIZE - 48, SPRITE_SIZE};
+  player2Collider = (Rectangle){screenWidth / 2.0f + 25,
+                               backgroundCollider.y - SPRITE_SIZE - 2,
+                               SPRITE_SIZE - 36, SPRITE_SIZE};
+    player1 = (Player){0,
+                      0,
+                      0,
+                      100,
+                      player1Texture,
+                      player1Collider,
+                      {0.0f, 0.0f},
+                      {0.0f, 0.0f},
+                      100,
+                      true};
+    player2 = (Player){0,
+                      0,
+                      0,
+                      100,
+                      player2Texture,
+                      player2Collider,
+                      {0.0f, 0.0f},
+                      {0.0f, 0.0f},
+                      100,
+                      true};
+  }
     //----------------------------------------------------------------------------------
     // Player 1
     //----------------------------------------------------------------------------------
     player1.acceleration =
-        keyDetection(KEY_D, KEY_A, KEY_W, KEY_C, KEY_V, player1.acceleration,
-                     &player1.isGrounded, &player1.animation);
+        keyDetection(KEY_D, KEY_A, KEY_W, KEY_C, KEY_V, &player1);
 
     // Apply gravity if not grounded
     if (!player1.isGrounded) {
@@ -154,8 +182,7 @@ int main() {
     // Player 2
     //----------------------------------------------------------------------------------
     player2.acceleration = keyDetection(
-        KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_K, KEY_L, player2.acceleration,
-        &player2.isGrounded, &player2.animation);
+        KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_K, KEY_L, &player2);
 
     if (IsKeyPressed(KEY_P)) {
       debugMode = !debugMode;
@@ -218,11 +245,11 @@ int main() {
 
       switch (player1.animation) {
       case 1:
-        HandlePlayerAnimation(&player1, &player2, 1, 11, 20, 0, 100, -90, 0,
+        HandlePlayerAnimation(&player1, &player2, 1, 11, 20, 20, 100, -90, 0,
                               false);
         break;
       case 2:
-        HandlePlayerAnimation(&player1, &player2, 2, 7, 50, 20, 150, -90, 1,
+        HandlePlayerAnimation(&player1, &player2, 2, 7, 55, 40, 150, -90, 1,
                               false);
         break;
       case 3:
@@ -239,7 +266,7 @@ int main() {
                               true);
         break;
       case 2:
-        HandlePlayerAnimation(&player2, &player1, 2, 7, 50, 30, -150, -90, 1,
+        HandlePlayerAnimation(&player2, &player1, 2, 7, 55, 40, -150, -90, 1,
                               true);
         break;
       case 3:
@@ -299,24 +326,27 @@ Rectangle IsGroundedDetection(Rectangle PlayerCollider,
 
 Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
                      KeyboardKey key4, KeyboardKey key5,
-                     Vector2 accelerationVector, bool *isGrounded,
-                     int *animation) {
+                     Player *player){
   if (IsKeyDown(key1)) {
-    accelerationVector.x += 2;
+    player->acceleration.x += 2;
   }
   if (IsKeyDown(key2)) {
-    accelerationVector.x -= 2;
+    player->acceleration.x -= 2;
   }
-  if (IsKeyDown(key3) && *isGrounded) {
-    *animation = 3;
+  if (IsKeyDown(key3) && player->isGrounded && player->animation !=3) {
+    player->animation = 3;
+    player->frameCounter = 0;
+    player->animationTimer = 0;
   }
-  if (IsKeyPressed(key4)) {
-    *animation = 1;
+  if (IsKeyPressed(key4) && player->animation !=1) {
+    player->animation = 1;
+    player->frameCounter = 0;
+    player->animationTimer = 0;
   }
-  if (IsKeyPressed(key5)) {
-    *animation = 2;
+  if (IsKeyPressed(key5) && player->animation !=2) {
+    player->animation = 2;
   }
-  return accelerationVector;
+  return player->acceleration;
 }
 Vector2 UpdatePosition(Vector2 accelerationVector, Vector2 velocityVector,
                        Rectangle *Collider, Rectangle Collider2, float friction,
@@ -368,7 +398,11 @@ void DrawPlayerAnimation(Player *player, int frameRow, bool flip) {
 
 void UpdatePlayerAnimation(Player *player, int maxFrames, int frameRow,
                            bool flip) {
-  if (player->animationTimer > 3 && frameRow != 2) {
+  if (player->animationTimer > 2 && frameRow == 0) {
+    player->frameCounter++;
+    player->animationTimer = 0;
+  }
+  if (player->animationTimer > 5 && frameRow == 1) {
     player->frameCounter++;
     player->animationTimer = 0;
   } else if (player->animationTimer > 6 && frameRow == 2) {
@@ -412,11 +446,15 @@ void HandlePlayerAnimation(Player *player, Player *opponent, int animationType,
                            int maxFrames, int cooldown, int hpReduction,
                            int xAccel, int yAccel, int frameRow, bool flip) {
   if (IsCooldownReady(player->cooldownTimer, cooldown)) {
+
     UpdatePlayerAnimation(player, maxFrames, frameRow, flip);
 
     if (player->animation == 0) { // Animation just ended
       if ((player->collider.x - opponent->collider.x) > -100 &&
           (player->collider.x - opponent->collider.x) < 100) {
+        if (opponent->animation > 3) {
+          opponent->hp -= hpReduction + 10;
+        }
         opponent->hp -= hpReduction;
         opponent->acceleration.x += xAccel;
         opponent->acceleration.y += yAccel;
