@@ -1,16 +1,8 @@
 #include <raylib.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <unistd.h>
 
 #define SPRITE_SIZE 36 * 4
-
-typedef struct Snake {
-  Vector2 position;
-  Vector2 size;
-  Vector2 speed;
-  Color color;
-} Snake;
 
 typedef struct Food {
   Vector2 position;
@@ -131,7 +123,6 @@ int main() {
     player2.cooldownTimer += 150 * dt;
     player1.cooldownTimer += 150 * dt;
     if (IsKeyPressed(KEY_R)) {
-
       Rectangle player1Collider = {screenWidth / 2.0f - SPRITE_SIZE,
                                    backgroundCollider.y - SPRITE_SIZE - 2,
                                    SPRITE_SIZE - 48, SPRITE_SIZE};
@@ -264,6 +255,7 @@ int main() {
         HandlePlayerAnimation(&player2, &player1, 1, 11, 20, 20, -100, -30, 0,
                               true);
         break;
+      case 2:
         HandlePlayerAnimation(&player2, &player1, 2, 7, 55, 40, -150, -90, 1,
                               true);
         break;
@@ -342,6 +334,8 @@ Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
   }
   if (IsKeyPressed(key5) && player->animation != 2) {
     player->animation = 2;
+    player->frameCounter = 0;
+    player->animationTimer = 0;
   }
   return player->acceleration;
 }
@@ -447,12 +441,14 @@ void HandlePlayerAnimation(Player *player, Player *opponent, int animationType,
     UpdatePlayerAnimation(player, maxFrames, frameRow, flip);
 
     if (player->animation == 0) { // Animation just ended
-      if ((player->collider.x - opponent->collider.x) > -100 &&
-          (player->collider.x - opponent->collider.x) < 100) {
+      if ((player->collider.x - opponent->collider.x) > -150 &&
+          (player->collider.x - opponent->collider.x) < 150) {
         if (opponent->animation > 3) {
           opponent->hp -= hpReduction + 10;
         }
-        opponent->hp -= hpReduction;
+        else{
+          opponent->hp -= hpReduction;
+        }
         opponent->acceleration.x += xAccel;
         opponent->acceleration.y += yAccel;
       }
