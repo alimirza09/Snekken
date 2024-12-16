@@ -441,8 +441,8 @@ void HandlePlayerAnimation(Player *player, Player *opponent, int animationType,
     UpdatePlayerAnimation(player, maxFrames, frameRow, flip);
 
     if (player->animation == 0) { // Animation just ended
-      if ((player->collider.x - opponent->collider.x) > -150 &&
-          (player->collider.x - opponent->collider.x) < 150) {
+      if ((player->collider.x - opponent->collider.x) > -120 &&
+          (player->collider.x - opponent->collider.x) < 120) {
         if (opponent->animation > 3) {
           opponent->hp -= hpReduction + 10;
         }
