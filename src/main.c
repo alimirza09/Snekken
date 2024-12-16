@@ -33,8 +33,7 @@ typedef struct {
 } Player;
 
 Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
-                     KeyboardKey key4, KeyboardKey key5,
-                     Player *player);
+                     KeyboardKey key4, KeyboardKey key5, Player *player);
 
 Rectangle IsGroundedDetection(Rectangle PlayerCollider,
                               Rectangle backgroundCollider, float *velocityY,
@@ -131,35 +130,35 @@ int main() {
     float dt = GetFrameTime();
     player2.cooldownTimer += 150 * dt;
     player1.cooldownTimer += 150 * dt;
-    if(IsKeyPressed(KEY_R)){
+    if (IsKeyPressed(KEY_R)) {
 
-  Rectangle player1Collider = {screenWidth / 2.0f - SPRITE_SIZE,
-                               backgroundCollider.y - SPRITE_SIZE - 2,
-                               SPRITE_SIZE - 48, SPRITE_SIZE};
-  Rectangle player2Collider = {screenWidth / 2.0f + 25,
-                               backgroundCollider.y - SPRITE_SIZE - 2,
-                               SPRITE_SIZE - 36, SPRITE_SIZE};
-    Player player1 = {0,
-                      0,
-                      0,
-                      100,
-                      player1Texture,
-                      player1Collider,
-                      {0.0f, 0.0f},
-                      {0.0f, 0.0f},
-                      100,
-                      true};
-    Player player2 = {0,
-                      0,
-                      0,
-                      100,
-                      player2Texture,
-                      player2Collider,
-                      {0.0f, 0.0f},
-                      {0.0f, 0.0f},
-                      100,
-                      true};
-  }
+      Rectangle player1Collider = {screenWidth / 2.0f - SPRITE_SIZE,
+                                   backgroundCollider.y - SPRITE_SIZE - 2,
+                                   SPRITE_SIZE - 48, SPRITE_SIZE};
+      Rectangle player2Collider = {screenWidth / 2.0f + 25,
+                                   backgroundCollider.y - SPRITE_SIZE - 2,
+                                   SPRITE_SIZE - 36, SPRITE_SIZE};
+      Player player1 = {0,
+                        0,
+                        0,
+                        100,
+                        player1Texture,
+                        player1Collider,
+                        {0.0f, 0.0f},
+                        {0.0f, 0.0f},
+                        100,
+                        true};
+      Player player2 = {0,
+                        0,
+                        0,
+                        100,
+                        player2Texture,
+                        player2Collider,
+                        {0.0f, 0.0f},
+                        {0.0f, 0.0f},
+                        100,
+                        true};
+    }
     //----------------------------------------------------------------------------------
     // Player 1
     //----------------------------------------------------------------------------------
@@ -181,8 +180,8 @@ int main() {
     //----------------------------------------------------------------------------------
     // Player 2
     //----------------------------------------------------------------------------------
-    player2.acceleration = keyDetection(
-        KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_K, KEY_L, &player2);
+    player2.acceleration =
+        keyDetection(KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_K, KEY_L, &player2);
 
     if (IsKeyPressed(KEY_P)) {
       debugMode = !debugMode;
@@ -324,25 +323,24 @@ Rectangle IsGroundedDetection(Rectangle PlayerCollider,
 }
 
 Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
-                     KeyboardKey key4, KeyboardKey key5,
-                     Player *player){
+                     KeyboardKey key4, KeyboardKey key5, Player *player) {
   if (IsKeyDown(key1)) {
     player->acceleration.x += 2;
   }
   if (IsKeyDown(key2)) {
     player->acceleration.x -= 2;
   }
-  if (IsKeyDown(key3) && player->isGrounded && player->animation !=3) {
+  if (IsKeyDown(key3) && player->isGrounded && player->animation != 3) {
     player->animation = 3;
     player->frameCounter = 0;
     player->animationTimer = 0;
   }
-  if (IsKeyPressed(key4) && player->animation !=1) {
+  if (IsKeyPressed(key4) && player->animation != 1) {
     player->animation = 1;
     player->frameCounter = 0;
     player->animationTimer = 0;
   }
-  if (IsKeyPressed(key5) && player->animation !=2) {
+  if (IsKeyPressed(key5) && player->animation != 2) {
     player->animation = 2;
   }
   return player->acceleration;
