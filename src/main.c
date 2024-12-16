@@ -131,8 +131,6 @@ int main() {
     float dt = GetFrameTime();
     player2.cooldownTimer += 150 * dt;
     player1.cooldownTimer += 150 * dt;
-<<<<<<< HEAD
-=======
     if(IsKeyPressed(KEY_R)){
 
   Rectangle player1Collider = {screenWidth / 2.0f - SPRITE_SIZE,
@@ -162,7 +160,6 @@ int main() {
                       100,
                       true};
   }
->>>>>>> ad74287 (Fixed blank frame when animation is done drawing)
     //----------------------------------------------------------------------------------
     // Player 1
     //----------------------------------------------------------------------------------
