@@ -4,13 +4,6 @@
 
 #define SPRITE_SIZE 36 * 4
 
-typedef struct Food {
-  Vector2 position;
-  Vector2 size;
-  bool active;
-  Color color;
-} Food;
-
 typedef struct {
   int animationTimer;
   int frameCounter;
@@ -24,8 +17,10 @@ typedef struct {
   bool isGrounded;
 } Player;
 
-Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
-                     KeyboardKey key4, KeyboardKey key5, Player *player);
+Vector2 keyDetection(KeyboardKey leftKey, KeyboardKey rightKey,
+                     KeyboardKey jumpKey, KeyboardKey punchKey,
+                     KeyboardKey kickKey, KeyboardKey specialKey,
+                     Player *player);
 
 Rectangle IsGroundedDetection(Rectangle PlayerCollider,
                               Rectangle backgroundCollider, float *velocityY,
@@ -40,9 +35,9 @@ bool IsCooldownReady(int cooldownTimer, int requiredTime);
 void DrawPlayerAnimation(Player *player, int frameRow, bool flip);
 
 void UpdatePlayerAnimation(Player *player, int maxFrames, int frameRow,
-                           bool flip);
+                           int frameInterval, bool flip);
 
-void HandlePlayerAnimation(Player *player, Player *opponent, int animationType,
+void HandlePlayerAnimation(Player *player, Player *opponent, int frameInterval,
                            int maxFrames, int cooldown, int hpReduction,
                            int xAccel, int yAccel, int frameRow, bool flip);
 
@@ -123,38 +118,38 @@ int main() {
     player2.cooldownTimer += 150 * dt;
     player1.cooldownTimer += 150 * dt;
     if (IsKeyPressed(KEY_R)) {
-      Rectangle player1Collider = {screenWidth / 2.0f - SPRITE_SIZE,
-                                   backgroundCollider.y - SPRITE_SIZE - 2,
-                                   SPRITE_SIZE - 48, SPRITE_SIZE};
-      Rectangle player2Collider = {screenWidth / 2.0f + 25,
-                                   backgroundCollider.y - SPRITE_SIZE - 2,
-                                   SPRITE_SIZE - 36, SPRITE_SIZE};
-      Player player1 = {0,
-                        0,
-                        0,
-                        100,
-                        player1Texture,
-                        player1Collider,
-                        {0.0f, 0.0f},
-                        {0.0f, 0.0f},
-                        100,
-                        true};
-      Player player2 = {0,
-                        0,
-                        0,
-                        100,
-                        player2Texture,
-                        player2Collider,
-                        {0.0f, 0.0f},
-                        {0.0f, 0.0f},
-                        100,
-                        true};
+      player1Collider = (Rectangle){screenWidth / 2.0f - SPRITE_SIZE,
+                                    backgroundCollider.y - SPRITE_SIZE - 2,
+                                    SPRITE_SIZE - 48, SPRITE_SIZE};
+      player2Collider = (Rectangle){screenWidth / 2.0f + 25,
+                                    backgroundCollider.y - SPRITE_SIZE - 2,
+                                    SPRITE_SIZE - 36, SPRITE_SIZE};
+      player1 = (Player){0,
+                         0,
+                         0,
+                         100,
+                         player1Texture,
+                         player1Collider,
+                         {0.0f, 0.0f},
+                         {0.0f, 0.0f},
+                         100,
+                         true};
+      player2 = (Player){0,
+                         0,
+                         0,
+                         100,
+                         player2Texture,
+                         player2Collider,
+                         {0.0f, 0.0f},
+                         {0.0f, 0.0f},
+                         100,
+                         true};
     }
     //----------------------------------------------------------------------------------
     // Player 1
     //----------------------------------------------------------------------------------
     player1.acceleration =
-        keyDetection(KEY_D, KEY_A, KEY_W, KEY_C, KEY_V, &player1);
+        keyDetection(KEY_D, KEY_A, KEY_W, KEY_X, KEY_C, KEY_V, &player1);
 
     // Apply gravity if not grounded
     if (!player1.isGrounded) {
@@ -171,8 +166,8 @@ int main() {
     //----------------------------------------------------------------------------------
     // Player 2
     //----------------------------------------------------------------------------------
-    player2.acceleration =
-        keyDetection(KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_K, KEY_L, &player2);
+    player2.acceleration = keyDetection(KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_J,
+                                        KEY_K, KEY_L, &player2);
 
     if (IsKeyPressed(KEY_P)) {
       debugMode = !debugMode;
@@ -225,25 +220,54 @@ int main() {
                player1.acceleration.y);
         printf("player1.animation: %d \n", player1.animation);
         printf("player2.animation: %d \n", player2.animation);
+        printf("player1.animationTimer: %d \n", player1.animationTimer);
+        printf("player2.animationTimer: %d \n", player2.animationTimer);
         printf("player1.frameCounter: %d \n", player1.frameCounter);
         printf("player2.frameCounter: %d \n", player2.frameCounter);
         printf("dt: %f \n", dt);
-        printf("player1.hp: %d \n", player1.hp);
-        printf("player2.hp: %d \n", player2.hp);
-        printf("player1.isGrounded: %d \n", player1.isGrounded);
       }
 
       switch (player1.animation) {
       case 1:
-        HandlePlayerAnimation(&player1, &player2, 1, 11, 20, 20, 100, -90, 0,
+        HandlePlayerAnimation(&player1, &player2, 2, 12, 20, 20, 100, -90, 0,
                               false);
         break;
       case 2:
-        HandlePlayerAnimation(&player1, &player2, 2, 7, 55, 35, 150, -90, 1,
+        HandlePlayerAnimation(&player1, &player2, 5, 7, 55, 35, 150, -90, 1,
                               false);
         break;
       case 3:
-        HandlePlayerAnimation(&player1, &player2, 3, 7, 0, 0, 0, 0, 2, false);
+        HandlePlayerAnimation(&player1, &player2, 6, 7, 0, 0, 0, 0, 2, false);
+        break;
+      case 4:
+        if (IsKeyDown(KEY_V)) {
+          if (player1.frameCounter < 16) {
+            if (player1.animationTimer > 5) {
+              player1.frameCounter++;
+              player1.animationTimer = 0;
+            } else {
+              player1.animationTimer++;
+            }
+          // TODO: MAKE FRAME 16 prolonged
+          } else if (player1.frameCounter == 16) {
+            if (player1.animationTimer < 1000) {
+              player1.animationTimer++;
+              player1.frameCounter = 16;
+          DrawPlayerAnimation(&player1, 3, false);
+            } else {
+              player1.animation = 0;
+              player1.frameCounter = 0;
+              player1.animationTimer = 0;
+            }
+          }
+          DrawPlayerAnimation(&player1, 3, false);
+
+        } else {
+          player1.animation = 0;
+          player1.frameCounter = 0;
+          player1.animationTimer = 0;
+          DrawPlayerAnimation(&player1, 0, false);
+        }
         break;
       default:
         DrawPlayerAnimation(&player1, 0, false);
@@ -252,15 +276,19 @@ int main() {
 
       switch (player2.animation) {
       case 1:
-        HandlePlayerAnimation(&player2, &player1, 1, 11, 20, 20, -100, -30, 0,
+        HandlePlayerAnimation(&player2, &player1, 2, 12, 20, 20, -100, -30, 0,
                               true);
         break;
       case 2:
-        HandlePlayerAnimation(&player2, &player1, 2, 7, 55, 35, -150, -90, 1,
+        HandlePlayerAnimation(&player2, &player1, 5, 7, 55, 35, -150, -90, 1,
                               true);
         break;
       case 3:
-        HandlePlayerAnimation(&player2, &player1, 3, 7, 0, 0, 0, 0, 2, true);
+        HandlePlayerAnimation(&player2, &player1, 6, 7, 0, 0, 0, 0, 2, true);
+        break;
+      case 4:
+        HandlePlayerAnimation(&player2, &player1, 4, 16, 2000, 50, -150, -90, 3,
+                              true);
         break;
       default:
         DrawPlayerAnimation(&player2, 0, true);
@@ -313,27 +341,33 @@ Rectangle IsGroundedDetection(Rectangle PlayerCollider,
   }
   return PlayerCollider;
 }
-
-Vector2 keyDetection(KeyboardKey key1, KeyboardKey key2, KeyboardKey key3,
-                     KeyboardKey key4, KeyboardKey key5, Player *player) {
-  if (IsKeyDown(key1)) {
+Vector2 keyDetection(KeyboardKey leftKey, KeyboardKey rightKey,
+                     KeyboardKey jumpKey, KeyboardKey punchKey,
+                     KeyboardKey kickKey, KeyboardKey specialKey,
+                     Player *player) {
+  if (IsKeyDown(leftKey)) {
     player->acceleration.x += 2;
   }
-  if (IsKeyDown(key2)) {
+  if (IsKeyDown(rightKey)) {
     player->acceleration.x -= 2;
   }
-  if (IsKeyDown(key3) && player->isGrounded && player->animation != 3) {
+  if (IsKeyDown(jumpKey) && player->isGrounded && player->animation != 3) {
     player->animation = 3;
     player->frameCounter = 0;
     player->animationTimer = 0;
   }
-  if (IsKeyPressed(key4) && player->animation != 1) {
+  if (IsKeyPressed(punchKey) && player->animation != 1) {
     player->animation = 1;
     player->frameCounter = 0;
     player->animationTimer = 0;
   }
-  if (IsKeyPressed(key5) && player->animation != 2) {
+  if (IsKeyPressed(kickKey) && player->animation != 2) {
     player->animation = 2;
+    player->frameCounter = 0;
+    player->animationTimer = 0;
+  }
+  if (IsKeyPressed(specialKey) && player->animation != 4) {
+    player->animation = 4;
     player->frameCounter = 0;
     player->animationTimer = 0;
   }
@@ -388,15 +422,11 @@ void DrawPlayerAnimation(Player *player, int frameRow, bool flip) {
 }
 
 void UpdatePlayerAnimation(Player *player, int maxFrames, int frameRow,
-                           bool flip) {
-  if (player->animationTimer > 2 && frameRow == 0) {
+                           int frameInterval, bool flip) {
+  if (player->animationTimer > frameInterval && frameRow < 2) {
     player->frameCounter++;
     player->animationTimer = 0;
-  }
-  if (player->animationTimer > 5 && frameRow == 1) {
-    player->frameCounter++;
-    player->animationTimer = 0;
-  } else if (player->animationTimer > 6 && frameRow == 2) {
+  } else if (player->animationTimer > frameInterval && frameRow == 2) {
     if (player->frameCounter < 3 || player->frameCounter >= 5) {
       player->frameCounter++;
       player->animationTimer = 0;
@@ -415,15 +445,7 @@ void UpdatePlayerAnimation(Player *player, int maxFrames, int frameRow,
 
   if (player->frameCounter <= maxFrames) {
     int flipModifier = flip ? -1 : 1;
-    DrawTexturePro(player->texture,
-                   (Rectangle){SPRITE_SIZE * (player->frameCounter == maxFrames
-                                                  ? maxFrames - 1
-                                                  : player->frameCounter),
-                               frameRow * SPRITE_SIZE,
-                               flipModifier * SPRITE_SIZE, SPRITE_SIZE},
-                   (Rectangle){player->collider.x + (flip ? -48 : 0),
-                               player->collider.y, SPRITE_SIZE, SPRITE_SIZE},
-                   (Vector2){0, 0}, 0.0f, WHITE);
+    DrawPlayerAnimation(player, frameRow, flip);
   }
 
   if (player->frameCounter >= maxFrames) {
@@ -433,20 +455,19 @@ void UpdatePlayerAnimation(Player *player, int maxFrames, int frameRow,
   }
 }
 
-void HandlePlayerAnimation(Player *player, Player *opponent, int animationType,
+void HandlePlayerAnimation(Player *player, Player *opponent, int frameInterval,
                            int maxFrames, int cooldown, int hpReduction,
                            int xAccel, int yAccel, int frameRow, bool flip) {
   if (IsCooldownReady(player->cooldownTimer, cooldown)) {
 
-    UpdatePlayerAnimation(player, maxFrames, frameRow, flip);
+    UpdatePlayerAnimation(player, maxFrames, frameRow, frameInterval, flip);
 
-    if (player->animation == 0) { // Animation just ended
+    if (player->animation == 0) {
       if ((player->collider.x - opponent->collider.x) > -120 &&
           (player->collider.x - opponent->collider.x) < 120) {
         if (opponent->animation > 3) {
           opponent->hp -= hpReduction + 10;
-        }
-        else{
+        } else {
           opponent->hp -= hpReduction;
         }
         opponent->acceleration.x += xAccel;
@@ -461,7 +482,7 @@ void HandlePlayerAnimation(Player *player, Player *opponent, int animationType,
 Texture2D SafeLoadTexture(const char *filename) {
   if (FileExists(filename)) {
     Image image = LoadImage(filename);
-    ImageResizeNN(&image, SPRITE_SIZE * 12, SPRITE_SIZE * 3);
+    ImageResizeNN(&image, SPRITE_SIZE * 16, SPRITE_SIZE * 5);
     if (image.data != NULL) {
       Texture2D texture = LoadTextureFromImage(image);
       UnloadImage(image);
