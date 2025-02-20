@@ -149,7 +149,7 @@ int main() {
     // Player 1
     //----------------------------------------------------------------------------------
     player1.acceleration =
-        keyDetection(KEY_D, KEY_A, KEY_W, KEY_X, KEY_C, KEY_V, &player1);
+        keyDetection(KEY_D, KEY_A, KEY_W, KEY_C, KEY_X, KEY_V, &player1);
 
     // Apply gravity if not grounded
     if (!player1.isGrounded) {
@@ -166,7 +166,7 @@ int main() {
     //----------------------------------------------------------------------------------
     // Player 2
     //----------------------------------------------------------------------------------
-    player2.acceleration = keyDetection(KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_J,
+    player2.acceleration = keyDetection(KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_J,
                                         KEY_K, KEY_L, &player2);
 
     if (IsKeyPressed(KEY_P)) {
@@ -220,11 +220,12 @@ int main() {
                player1.acceleration.y);
         printf("player1.animation: %d \n", player1.animation);
         printf("player2.animation: %d \n", player2.animation);
-        printf("player1.animationTimer: %d \n", player1.animationTimer);
-        printf("player2.animationTimer: %d \n", player2.animationTimer);
         printf("player1.frameCounter: %d \n", player1.frameCounter);
         printf("player2.frameCounter: %d \n", player2.frameCounter);
         printf("dt: %f \n", dt);
+        printf("player1.hp: %d \n", player1.hp);
+        printf("player2.hp: %d \n", player2.hp);
+        printf("player1.isGrounded: %d \n", player1.isGrounded);
       }
 
       switch (player1.animation) {
@@ -248,16 +249,15 @@ int main() {
             } else {
               player1.animationTimer++;
             }
-          // TODO: MAKE FRAME 16 prolonged
+            // TODO: MAKE FRAME 16 prolonged
           } else if (player1.frameCounter == 16) {
-            if (player1.animationTimer < 1000) {
-              player1.animationTimer++;
-              player1.frameCounter = 16;
-          DrawPlayerAnimation(&player1, 3, false);
-            } else {
+            if (player1.animationTimer >= 1000) {
               player1.animation = 0;
               player1.frameCounter = 0;
               player1.animationTimer = 0;
+
+            } else {
+              player1.animationTimer++;
             }
           }
           DrawPlayerAnimation(&player1, 3, false);
@@ -272,7 +272,7 @@ int main() {
       default:
         DrawPlayerAnimation(&player1, 0, false);
         break;
-      }
+      } 
 
       switch (player2.animation) {
       case 1:
@@ -289,7 +289,6 @@ int main() {
       case 4:
         HandlePlayerAnimation(&player2, &player1, 4, 16, 2000, 50, -150, -90, 3,
                               true);
-        break;
       default:
         DrawPlayerAnimation(&player2, 0, true);
         break;
@@ -465,8 +464,12 @@ void HandlePlayerAnimation(Player *player, Player *opponent, int frameInterval,
     if (player->animation == 0) {
       if ((player->collider.x - opponent->collider.x) > -120 &&
           (player->collider.x - opponent->collider.x) < 120) {
-        if (opponent->animation > 3) {
+        if (opponent->animation < 3 && opponent->animation != 0) {
           opponent->hp -= hpReduction + 10;
+          printf("COUNTER\n");
+          opponent->animation = 0;
+          opponent->frameCounter = 0;
+          opponent->animationTimer = 0;
         } else {
           opponent->hp -= hpReduction;
         }
