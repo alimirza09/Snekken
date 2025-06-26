@@ -205,6 +205,30 @@ int main() {
         IsGroundedDetection(player2.collider, backgroundCollider,
                             &player2.velocity.y, &player2.isGrounded);
 
+    if (debugMode) {
+      DrawFPS(10, 10);
+      printf("player1.collider(%f, %f) \n", player1.collider.x,
+             player1.collider.y);
+      printf("player2.collider(%f, %f) \n", player2.collider.x,
+             player2.collider.y);
+      printf("player1.velocity(%f, %f) \n", player1.velocity.x,
+             player1.velocity.y);
+      printf("player2.velocity(%f, %f) \n", player2.velocity.x,
+             player2.velocity.y);
+      printf("player1.acceleration(%f, %f) \n", player1.acceleration.x,
+             player1.acceleration.y);
+      printf("player1.acceleration(%f, %f) \n", player1.acceleration.x,
+             player1.acceleration.y);
+      printf("player1.animation: %d \n", player1.animation);
+      printf("player2.animation: %d \n", player2.animation);
+      printf("player1.frameCounter: %d \n", player1.frameCounter);
+      printf("player2.frameCounter: %d \n", player2.frameCounter);
+      printf("dt: %f \n", dt);
+      printf("player1.hp: %f \n", player1.hp);
+      printf("player2.hp: %f \n", player2.hp);
+      printf("player1.isGrounded: %d \n", player1.isGrounded);
+    }
+
     //----------------------------------------------------------------------------------
     // Draw
     //----------------------------------------------------------------------------------
@@ -222,28 +246,7 @@ int main() {
                              (Color){68, 121, 227, 100});
       DrawTexture(backgroundTexture, 0, screenHeight - 30, WHITE);
 
-      if (debugMode) {
-        DrawFPS(10, 10);
-        printf("player1.collider(%f, %f) \n", player1.collider.x,
-               player1.collider.y);
-        printf("player2.collider(%f, %f) \n", player2.collider.x,
-               player2.collider.y);
-        printf("player1.velocity(%f, %f) \n", player1.velocity.x,
-               player1.velocity.y);
-        printf("player2.velocity(%f, %f) \n", player2.velocity.x,
-               player2.velocity.y);
-        printf("player1.acceleration(%f, %f) \n", player1.acceleration.x,
-               player1.acceleration.y);
-        printf("player1.acceleration(%f, %f) \n", player1.acceleration.x,
-               player1.acceleration.y);
-        printf("player1.animation: %d \n", player1.animation);
-        printf("player2.animation: %d \n", player2.animation);
-        printf("player1.frameCounter: %d \n", player1.frameCounter);
-        printf("player2.frameCounter: %d \n", player2.frameCounter);
-        printf("dt: %f \n", dt);
-        printf("player1.hp: %f \n", player1.hp);
-        printf("player2.hp: %f \n", player2.hp);
-        printf("player1.isGrounded: %d \n", player1.isGrounded);
+      if (minigameMode) {
       }
 
       switch (player1.animation) {
