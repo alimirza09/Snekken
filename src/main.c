@@ -1,4 +1,6 @@
 #include "raylib.h"
+#include "snake.c"
+// #include "snake.h"
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -47,8 +49,8 @@ Texture2D SafeLoadTexture(const char *filename);
 
 Image SafeLoadImage(const char *filename);
 
-const int screenWidth = 800;
-const int screenHeight = 450;
+// const int screenWidth = 800;
+// const int screenHeight = 450;
 
 int main() {
   //----------------------------------------------------------------------------------
@@ -58,6 +60,7 @@ int main() {
   ChangeDirectory(".."); // assets not found if you dont do this
 
   InitWindow(screenWidth, screenHeight, "Snekken");
+  InitGame();
   Image icon = LoadImage("assets/ICON.png");
   SetWindowIcon(icon);
 
@@ -98,20 +101,20 @@ int main() {
   Rectangle player2Collider = {screenWidth / 2.0f + 25,
                                backgroundCollider.y - SPRITE_SIZE - 2,
                                SPRITE_SIZE - 36, SPRITE_SIZE};
-  Player player2 = {0,               // animationTimer;
-                    0,               // frameCounter;
-                    0,               // animation;
-                    100,             // cooldownTimer;
-                    player2Texture,  // texture;
-                    player2Collider, // collider;
+  Player player2 = {0,               // animationTimer
+                    0,               // frameCounter
+                    0,               // animation
+                    100,             // cooldownTimer
+                    player2Texture,  // texture
+                    player2Collider, // collider
                     {0.0f, 0.0f},    // acceleration
-                    {0.0f, 0.0f},    // velocity;
-                    100,             // hp;
-                    0,               // mana;
-                    true};           // isGrounded;
+                    {0.0f, 0.0f},    // velocity
+                    100,             // hp
+                    0,               // mana
+                    true};           // isGrounded
 
   bool debugMode = false;
-  bool minigameMode = false;
+  bool minigameMode = true;
 
   const float gravitationalForce = 4;
 
@@ -122,263 +125,269 @@ int main() {
 
   // Main game loop
   while (!WindowShouldClose()) {
-    float dt = GetFrameTime();
-    player2.cooldownTimer += 150 * dt;
-    player1.cooldownTimer += 150 * dt;
-    if (IsKeyPressed(KEY_R)) {
-      player1Collider = (Rectangle){screenWidth / 2.0f - SPRITE_SIZE,
-                                    backgroundCollider.y - SPRITE_SIZE - 2,
-                                    SPRITE_SIZE - 48, SPRITE_SIZE};
-      player2Collider = (Rectangle){screenWidth / 2.0f + 25,
-                                    backgroundCollider.y - SPRITE_SIZE - 2,
-                                    SPRITE_SIZE - 36, SPRITE_SIZE};
-      player1 = (Player){0,               // animationTimer;
-                         0,               // frameCounter;
-                         0,               // animation;
-                         100,             // cooldownTimer;
-                         player1Texture,  // texture;
-                         player1Collider, // collider;
-                         {0.0f, 0.0f},    // acceleration
-                         {0.0f, 0.0f},    // velocity;
-                         100,             // hp;
-                         0,               // mana;
-                         true};           // isGrounded;
-
-      player2 = (Player){0,
-                         0,
-                         0,
-                         100,
-                         player2Texture,
-                         player2Collider,
-                         {0.0f, 0.0f},
-                         {0.0f, 0.0f},
-                         100,
-                         0,
-                         true};
-    }
-    //----------------------------------------------------------------------------------
-    // Player 1
-    //----------------------------------------------------------------------------------
-    if (player1.mana > 100) {
-      player1.mana = 100;
-    }
-    player1.acceleration =
-        keyDetection(KEY_D, KEY_A, KEY_W, KEY_C, KEY_X, KEY_V, &player1);
-
-    // Apply gravity if not grounded
-    if (!player1.isGrounded) {
-      player1.acceleration.y += gravitationalForce;
-    }
-    player1.velocity =
-        UpdatePosition(player1.acceleration, player1.velocity,
-                       &player1.collider, player2.collider, friction, dt, 1);
-    player1.acceleration = (Vector2){0, 0};
-    player1.collider =
-        IsGroundedDetection(player1.collider, backgroundCollider,
-                            &player1.velocity.y, &player1.isGrounded);
-
-    //----------------------------------------------------------------------------------
-    // Player 2
-    //----------------------------------------------------------------------------------
-    if (player2.mana > 100) {
-      player2.mana = 100;
-    }
-
-    player2.acceleration = keyDetection(KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_J,
-                                        KEY_K, KEY_L, &player2);
-
-    if (IsKeyPressed(KEY_P)) {
-      debugMode = !debugMode;
-    }
-
-    // Apply gravity if not grounded
-    if (!player2.isGrounded) {
-      player2.acceleration.y += gravitationalForce;
-    }
-
-    player2.velocity =
-        UpdatePosition(player2.acceleration, player2.velocity,
-                       &player2.collider, player1.collider, friction, dt, 2);
-    player2.acceleration = (Vector2){0, 0};
-
-    player2.collider =
-        IsGroundedDetection(player2.collider, backgroundCollider,
-                            &player2.velocity.y, &player2.isGrounded);
-
-    if (debugMode) {
-      DrawFPS(10, 10);
-      printf("player1.collider(%f, %f) \n", player1.collider.x,
-             player1.collider.y);
-      printf("player2.collider(%f, %f) \n", player2.collider.x,
-             player2.collider.y);
-      printf("player1.velocity(%f, %f) \n", player1.velocity.x,
-             player1.velocity.y);
-      printf("player2.velocity(%f, %f) \n", player2.velocity.x,
-             player2.velocity.y);
-      printf("player1.acceleration(%f, %f) \n", player1.acceleration.x,
-             player1.acceleration.y);
-      printf("player1.acceleration(%f, %f) \n", player1.acceleration.x,
-             player1.acceleration.y);
-      printf("player1.animation: %d \n", player1.animation);
-      printf("player2.animation: %d \n", player2.animation);
-      printf("player1.frameCounter: %d \n", player1.frameCounter);
-      printf("player2.frameCounter: %d \n", player2.frameCounter);
-      printf("dt: %f \n", dt);
-      printf("player1.hp: %f \n", player1.hp);
-      printf("player2.hp: %f \n", player2.hp);
-      printf("player1.isGrounded: %d \n", player1.isGrounded);
-    }
-
-    //----------------------------------------------------------------------------------
-    // Draw
-    //----------------------------------------------------------------------------------
-    BeginDrawing();
-
-    if (player2.hp <= 0) {
-      DrawText("PLAYER 1 WINS", 28, screenHeight / 2.5, 90, RED);
-    } else if (player1.hp <= 0) {
-      DrawText("PLAYER 2 WINS", 28, screenHeight / 2.5, 90, RED);
+    if (minigameMode) {
+      UpdateDrawFrame();
     } else {
+      float dt = GetFrameTime();
+      player2.cooldownTimer += 150 * dt;
+      player1.cooldownTimer += 150 * dt;
+      if (IsKeyPressed(KEY_R)) {
+        player1Collider = (Rectangle){screenWidth / 2.0f - SPRITE_SIZE,
+                                      backgroundCollider.y - SPRITE_SIZE - 2,
+                                      SPRITE_SIZE - 48, SPRITE_SIZE};
 
-      ClearBackground(BLACK);
-      DrawRectangleGradientV(0, 0, screenWidth, screenHeight,
-                             (Color){77, 180, 227, 100},
-                             (Color){68, 121, 227, 100});
-      DrawTexture(backgroundTexture, 0, screenHeight - 30, WHITE);
+        player2Collider = (Rectangle){screenWidth / 2.0f + 25,
+                                      backgroundCollider.y - SPRITE_SIZE - 2,
+                                      SPRITE_SIZE - 36, SPRITE_SIZE};
 
-      if (minigameMode) {
+        player1 = (Player){0,               // animationTimer;
+                           0,               // frameCounter;
+                           0,               // animation;
+                           100,             // cooldownTimer;
+                           player1Texture,  // texture;
+                           player1Collider, // collider;
+                           {0.0f, 0.0f},    // acceleration
+                           {0.0f, 0.0f},    // velocity;
+                           100,             // hp;
+                           0,               // mana;
+                           true};           // isGrounded;
+
+        player2 = (Player){0,
+                           0,
+                           0,
+                           100,
+                           player2Texture,
+                           player2Collider,
+                           {0.0f, 0.0f},
+                           {0.0f, 0.0f},
+                           100,
+                           0,
+                           true};
+      }
+      //----------------------------------------------------------------------------------
+      // Player 1
+      //----------------------------------------------------------------------------------
+      if (player1.mana > 100) {
+        player1.mana = 100;
+      }
+      player1.acceleration =
+          keyDetection(KEY_D, KEY_A, KEY_W, KEY_C, KEY_X, KEY_V, &player1);
+
+      // Apply gravity if not grounded
+      if (!player1.isGrounded) {
+        player1.acceleration.y += gravitationalForce;
+      }
+      player1.velocity =
+          UpdatePosition(player1.acceleration, player1.velocity,
+                         &player1.collider, player2.collider, friction, dt, 1);
+      player1.acceleration = (Vector2){0, 0};
+      player1.collider =
+          IsGroundedDetection(player1.collider, backgroundCollider,
+                              &player1.velocity.y, &player1.isGrounded);
+
+      //----------------------------------------------------------------------------------
+      // Player 2
+      //----------------------------------------------------------------------------------
+      if (player2.mana > 100) {
+        player2.mana = 100;
       }
 
-      switch (player1.animation) {
-      case 1:
-        HandlePlayerAnimation(&player1, &player2, 2, 12, 20, 10, 30, 100, -90,
-                              0, false);
-        break;
+      player2.acceleration = keyDetection(KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_J,
+                                          KEY_K, KEY_L, &player2);
 
-      case 2:
-        HandlePlayerAnimation(&player1, &player2, 5, 7, 55, 15, 10, 150, -90, 1,
-                              false);
-        break;
+      if (IsKeyPressed(KEY_P)) {
+        debugMode = !debugMode;
+      }
 
-      case 3:
-        HandlePlayerAnimation(&player1, &player2, 6, 7, 0, 0, 0, 0, 0, 2,
-                              false);
-        break;
+      // Apply gravity if not grounded
+      if (!player2.isGrounded) {
+        player2.acceleration.y += gravitationalForce;
+      }
 
-      case 4:
-        if (player1.mana < 100) {
-          printf("insufficient mana \n");
-          player1.animation = 0;
-          player1.frameCounter = 0;
-          player1.animationTimer = 0;
+      player2.velocity =
+          UpdatePosition(player2.acceleration, player2.velocity,
+                         &player2.collider, player1.collider, friction, dt, 2);
+      player2.acceleration = (Vector2){0, 0};
+
+      player2.collider =
+          IsGroundedDetection(player2.collider, backgroundCollider,
+                              &player2.velocity.y, &player2.isGrounded);
+
+      if (debugMode) {
+        DrawFPS(10, 10);
+        printf("player1.collider(%f, %f) \n", player1.collider.x,
+               player1.collider.y);
+        printf("player2.collider(%f, %f) \n", player2.collider.x,
+               player2.collider.y);
+        printf("player1.velocity(%f, %f) \n", player1.velocity.x,
+               player1.velocity.y);
+        printf("player2.velocity(%f, %f) \n", player2.velocity.x,
+               player2.velocity.y);
+        printf("player1.acceleration(%f, %f) \n", player1.acceleration.x,
+               player1.acceleration.y);
+        printf("player1.acceleration(%f, %f) \n", player1.acceleration.x,
+               player1.acceleration.y);
+        printf("player1.animation: %d \n", player1.animation);
+        printf("player2.animation: %d \n", player2.animation);
+        printf("player1.frameCounter: %d \n", player1.frameCounter);
+        printf("player2.frameCounter: %d \n", player2.frameCounter);
+        printf("dt: %f \n", dt);
+        printf("player1.hp: %f \n", player1.hp);
+        printf("player2.hp: %f \n", player2.hp);
+        printf("player1.isGrounded: %d \n", player1.isGrounded);
+      }
+
+      //----------------------------------------------------------------------------------
+      // Draw
+      //----------------------------------------------------------------------------------
+      BeginDrawing();
+
+      if (player2.hp <= 0) {
+        DrawText("PLAYER 1 WINS", 28, screenHeight / 2.5, 90, RED);
+      } else if (player1.hp <= 0) {
+        DrawText("PLAYER 2 WINS", 28, screenHeight / 2.5, 90, RED);
+      } else {
+        ClearBackground(BLACK);
+        DrawRectangleGradientV(0, 0, screenWidth, screenHeight,
+                               (Color){77, 180, 227, 100},
+                               (Color){68, 121, 227, 100});
+        DrawTexture(backgroundTexture, 0, screenHeight - 30, WHITE);
+
+        // Player1 animation handling
+        switch (player1.animation) {
+        case 1:
+          HandlePlayerAnimation(&player1, &player2, 2, 12, 20, 10, 30, 100, -90,
+                                0, false);
+          break;
+
+        case 2:
+          HandlePlayerAnimation(&player1, &player2, 5, 7, 55, 15, 10, 150, -90,
+                                1, false);
+          break;
+
+        case 3:
+          HandlePlayerAnimation(&player1, &player2, 6, 7, 0, 0, 0, 0, 0, 2,
+                                false);
+          break;
+
+        case 4:
+          if (player1.mana < 100) {
+            printf("insufficient mana \n");
+            player1.animation = 0;
+            player1.frameCounter = 0;
+            player1.animationTimer = 0;
+            DrawPlayerAnimation(&player1, 0, false);
+            break;
+          }
+          DrawPlayerAnimation(&player1, 3, false);
+          if (IsKeyDown(KEY_V)) {
+            if (player1.frameCounter < 15) {
+              if (player1.animationTimer > 1) {
+                player1.frameCounter++;
+                player1.animationTimer = 0;
+              } else {
+                player1.animationTimer++;
+              }
+            } else if (player1.frameCounter == 15) {
+              if (player1.animationTimer > 100) {
+                player1.animation = 0;
+                player1.frameCounter = 0;
+                player1.animationTimer = 0;
+                player1.mana = 0;
+                DrawPlayerAnimation(&player1, 0, false);
+              } else {
+                ImageResizeNN(&laserBeam,
+                              player2.collider.x - player1.collider.x,
+                              SPRITE_SIZE);
+                Texture2D laserBeamTexture = LoadTextureFromImage(laserBeam);
+                DrawTexturePro(
+                    laserBeamTexture,
+                    (Rectangle){0, 0, player2.collider.x - player1.collider.x,
+                                SPRITE_SIZE},
+                    (Rectangle){
+                        player1.collider.x + SPRITE_SIZE, player1.collider.y,
+                        player2.collider.x - player1.collider.x - SPRITE_SIZE,
+                        SPRITE_SIZE},
+                    (Vector2){0, 0}, 0.0f, WHITE);
+
+                player1.animationTimer++;
+                player2.hp -= 0.5;
+              }
+            }
+          } else {
+            player1.animation = 0;
+            player1.frameCounter = 0;
+            player1.animationTimer = 0;
+            DrawPlayerAnimation(&player1, 0, false);
+          }
+          break;
+        default:
           DrawPlayerAnimation(&player1, 0, false);
           break;
         }
-        DrawPlayerAnimation(&player1, 3, false);
-        if (IsKeyDown(KEY_V)) {
-          if (player1.frameCounter < 15) {
-            if (player1.animationTimer > 1) {
-              player1.frameCounter++;
-              player1.animationTimer = 0;
-            } else {
-              player1.animationTimer++;
-            }
-          } else if (player1.frameCounter == 15) {
-            if (player1.animationTimer > 100) {
-              player1.animation = 0;
-              player1.frameCounter = 0;
-              player1.animationTimer = 0;
-              player1.mana = 0;
-              DrawPlayerAnimation(&player1, 0, false);
-            } else {
-              ImageResizeNN(&laserBeam, player2.collider.x - player1.collider.x,
-                            SPRITE_SIZE);
-              Texture2D laserBeamTexture = LoadTextureFromImage(laserBeam);
-              DrawTexturePro(
-                  laserBeamTexture,
-                  (Rectangle){0, 0, player2.collider.x - player1.collider.x,
-                              SPRITE_SIZE},
-                  (Rectangle){
-                      player1.collider.x + SPRITE_SIZE, player1.collider.y,
-                      player2.collider.x - player1.collider.x - SPRITE_SIZE,
-                      SPRITE_SIZE},
-                  (Vector2){0, 0}, 0.0f, WHITE);
 
-              player1.animationTimer++;
-              player2.hp -= 0.5;
-            }
-          }
-        } else {
-          player1.animation = 0;
-          player1.frameCounter = 0;
-          player1.animationTimer = 0;
-          DrawPlayerAnimation(&player1, 0, false);
+        // Player2 animation handling
+        switch (player2.animation) {
+        case 1:
+          HandlePlayerAnimation(&player2, &player1, 2, 12, 10, 20, 30, -100,
+                                -30, 0, true);
+          break;
+        case 2:
+          HandlePlayerAnimation(&player2, &player1, 5, 7, 55, 15, 10, -150, -90,
+                                1, true);
+          break;
+        case 3:
+          HandlePlayerAnimation(&player2, &player1, 6, 7, 0, 0, 0, 0, 0, 2,
+                                true);
+          break;
+        // case 4:
+        //   HandlePlayerAnimation(&player2, &player1, 4, 16, 2000, 50, -150,
+        //   -90, 3,
+        //                         true);
+        default:
+          DrawPlayerAnimation(&player2, 0, true);
+          break;
         }
-        break;
-      default:
-        DrawPlayerAnimation(&player1, 0, false);
-        break;
+
+        // HP Draw
+        DrawRectangleLines(50, 50, 81, 11, GRAY);
+        DrawRectangleLines(screenWidth - 50 - 80, 50, 100 / 1.22, 11, GRAY);
+        DrawRectangleGradientH(50, 50, player1.hp / 1.249, 10,
+                               (Color){255, 51, 65, 100}, RED);
+        DrawRectangleGradientH(screenWidth - 50 - 80, 50, player2.hp / 1.249,
+                               10, (Color){255, 51, 65, 100}, RED);
+        // Mana Draw
+        DrawRectangleLines(50, 50 + 11, 81, 5, GRAY);
+        DrawRectangleLines(screenWidth - 50 - 80, 50 + 11, 100 / 1.22, 5, GRAY);
+
+        // RLAPI void DrawRectangleGradientH(int posX, int posY, int width, int
+        // height, Color left, Color right);   // Draw a
+        // horizontal-gradient-filled rectangle RLAPI void
+        // RLAPI void DrawRectangleLines(int posX, int
+        // posY, int width, int height, Color color);                   // Draw
+        // rectangle outline
+        DrawRectangleGradientH(50, 50 + 11, player1.mana / 1.249, 4,
+                               (Color){57, 8, 255, 100}, BLUE);
+        DrawRectangleGradientH(screenWidth - 50 - 80, 50 + 11,
+                               player2.mana / 1.249, 4,
+                               (Color){57, 8, 255, 100}, BLUE);
+
+        // Player Identifier draw
+        DrawText("PLAYER 1", 50, 40, 5, RAYWHITE);
+        DrawText("PLAYER 2", screenWidth - 50 - 80, 40, 5, RAYWHITE);
+        // Colliders draw
+        if (debugMode) {
+          DrawRectangleLines(player1.collider.x, player1.collider.y,
+                             player1.collider.width, player1.collider.height,
+                             RAYWHITE);
+          DrawRectangleLines(player2.collider.x, player2.collider.y,
+                             player2.collider.width, player2.collider.height,
+                             RAYWHITE);
+        }
       }
 
-      switch (player2.animation) {
-      case 1:
-        HandlePlayerAnimation(&player2, &player1, 2, 12, 10, 20, 30, -100, -30,
-                              0, true);
-        break;
-      case 2:
-        HandlePlayerAnimation(&player2, &player1, 5, 7, 55, 15, 10, -150, -90,
-                              1, true);
-        break;
-      case 3:
-        HandlePlayerAnimation(&player2, &player1, 6, 7, 0, 0, 0, 0, 0, 2, true);
-        break;
-      // case 4:
-      //   HandlePlayerAnimation(&player2, &player1, 4, 16, 2000, 50, -150, -90,
-      //   3,
-      //                         true);
-      default:
-        DrawPlayerAnimation(&player2, 0, true);
-        break;
-      }
-
-      // HP Draw
-      DrawRectangleLines(50, 50, 81, 11, GRAY);
-      DrawRectangleLines(screenWidth - 50 - 80, 50, 100 / 1.22, 11, GRAY);
-      DrawRectangleGradientH(50, 50, player1.hp / 1.249, 10,
-                             (Color){255, 51, 65, 100}, RED);
-      DrawRectangleGradientH(screenWidth - 50 - 80, 50, player2.hp / 1.249, 10,
-                             (Color){255, 51, 65, 100}, RED);
-      // Mana Draw
-      DrawRectangleLines(50, 50 + 11, 81, 5, GRAY);
-      DrawRectangleLines(screenWidth - 50 - 80, 50 + 11, 100 / 1.22, 5, GRAY);
-
-      // RLAPI void DrawRectangleGradientH(int posX, int posY, int width, int
-      // height, Color left, Color right);   // Draw a
-      // horizontal-gradient-filled rectangle RLAPI void
-      // RLAPI void DrawRectangleLines(int posX, int
-      // posY, int width, int height, Color color);                   // Draw
-      // rectangle outline
-      DrawRectangleGradientH(50, 50 + 11, player1.mana / 1.249, 4,
-                             (Color){57, 8, 255, 100}, BLUE);
-      DrawRectangleGradientH(screenWidth - 50 - 80, 50 + 11,
-                             player2.mana / 1.249, 4, (Color){57, 8, 255, 100},
-                             BLUE);
-
-      // Player Identifier draw
-      DrawText("PLAYER 1", 50, 40, 5, RAYWHITE);
-      DrawText("PLAYER 2", screenWidth - 50 - 80, 40, 5, RAYWHITE);
-      // Colliders draw
-      if (debugMode) {
-        DrawRectangleLines(player1.collider.x, player1.collider.y,
-                           player1.collider.width, player1.collider.height,
-                           RAYWHITE);
-        DrawRectangleLines(player2.collider.x, player2.collider.y,
-                           player2.collider.width, player2.collider.height,
-                           RAYWHITE);
-      }
+      EndDrawing();
     }
-
-    EndDrawing();
   }
 
   // De-Initialization

@@ -1,16 +1,11 @@
-#include "snake.h"
 #include "raylib.h"
+#include <stdbool.h>
 
-//----------------------------------------------------------------------------------
-// Some Defines
-//----------------------------------------------------------------------------------
 #define SNAKE_LENGTH 256
-#define SQUARE_SIZE 31
+#define SQUARE_SIZE 15
 
-//----------------------------------------------------------------------------------
-// Types and Structures Definition
-//----------------------------------------------------------------------------------
 typedef struct Snake {
+
   Vector2 position;
   Vector2 size;
   Vector2 speed;
@@ -22,18 +17,16 @@ typedef struct Food {
   Vector2 size;
   bool active;
   Color color;
+  int foodValue;
 } Food;
 
-//------------------------------------------------------------------------------------
-// Global Variables Declaration
-//------------------------------------------------------------------------------------
 static const int screenWidth = 800;
 static const int screenHeight = 450;
 
-static int framesCounter = 0;
+static int frameCounter = 0;
+
 static bool gameOver = false;
 static bool pause = false;
-
 static Food fruit = {0};
 static Snake snake[SNAKE_LENGTH] = {0};
 static Vector2 snakePosition[SNAKE_LENGTH] = {0};
@@ -41,16 +34,9 @@ static bool allowMove = false;
 static Vector2 offset = {0};
 static int counterTail = 2;
 
-
-// Initialize game variables
 void InitGame(void) {
-  framesCounter = 0;
-  gameOver = false;
-  pause = false;
-
-  counterTail = 1;
-  allowMove = false;
-
+  frameCounter = 0;
+  counterTail = 2;
   offset.x = screenWidth % SQUARE_SIZE;
   offset.y = screenHeight % SQUARE_SIZE;
 
@@ -60,21 +46,20 @@ void InitGame(void) {
     snake[i].speed = (Vector2){SQUARE_SIZE, 0};
 
     if (i == 0)
-      snake[i].color = DARKBLUE;
-    else
-      snake[i].color = BLUE;
-  }
+      snake[i].color = GREEN;
 
+    else
+      snake[i].color = LIME;
+  }
   for (int i = 0; i < SNAKE_LENGTH; i++) {
     snakePosition[i] = (Vector2){0.0f, 0.0f};
   }
 
   fruit.size = (Vector2){SQUARE_SIZE, SQUARE_SIZE};
-  fruit.color = SKYBLUE;
+  fruit.color = RED;
   fruit.active = false;
 }
 
-// Update game (one frame)
 void UpdateGame(void) {
   if (!gameOver) {
     if (IsKeyPressed('P'))
@@ -103,7 +88,7 @@ void UpdateGame(void) {
       for (int i = 0; i < counterTail; i++)
         snakePosition[i] = snake[i].position;
 
-      if ((framesCounter % 20) == 0) {
+      if ((frameCounter % 10) == 0) {
         for (int i = 0; i < counterTail; i++) {
           if (i == 0) {
             snake[0].position.x += snake[0].speed.x;
@@ -162,7 +147,7 @@ void UpdateGame(void) {
         fruit.active = false;
       }
 
-      framesCounter++;
+      frameCounter++;
     }
   } else {
     if (IsKeyPressed(KEY_ENTER)) {
@@ -224,3 +209,12 @@ void UpdateDrawFrame(void) {
   UpdateGame();
   DrawGame();
 }
+// int main() {
+//   SetTargetFPS(60);
+//   InitWindow(screenWidth, screenHeight, "snake");
+//   InitGame();
+//   while (!WindowShouldClose()) {
+//     UpdateDrawFrame();
+//   }
+//   UnloadGame();
+// }

@@ -6,7 +6,6 @@ set(CMAKE_C_STANDARD 11)
 # Add your source files
 set(SOURCES
     src/main.c
-    src/snake.c
     # Add more source files here if you have multiple
 )
 
