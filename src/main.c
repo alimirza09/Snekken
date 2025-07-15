@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include "snake.c"
 // #include "snake.h"
+#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -49,9 +50,6 @@ Texture2D SafeLoadTexture(const char *filename);
 
 Image SafeLoadImage(const char *filename);
 
-// const int screenWidth = 800;
-// const int screenHeight = 450;
-
 int main() {
   //----------------------------------------------------------------------------------
   // Initialization
@@ -82,6 +80,7 @@ int main() {
   Rectangle player1Collider = {screenWidth / 2.0f - SPRITE_SIZE,
                                backgroundCollider.y - SPRITE_SIZE - 2,
                                SPRITE_SIZE - 48, SPRITE_SIZE};
+  double multiplier;
   Player player1 = {0,
                     0,
                     0,
@@ -114,19 +113,29 @@ int main() {
                     true};           // isGrounded
 
   bool debugMode = false;
-  bool minigameMode = true;
+  bool minigameMode = false;
 
   const float gravitationalForce = 4;
-
   // Friction coefficient
-  const float friction = 0.99;
+  const float friction = 0.95;
 
   SetTargetFPS(60);
 
   // Main game loop
   while (!WindowShouldClose()) {
     if (minigameMode) {
-      UpdateDrawFrame();
+      Vector2 playerScore = UpdateDrawFrame();
+      if ((playerScore.x != 256) && (playerScore.y != 256)) {
+        if (playerScore.y == 0) {
+          multiplier = playerScore.x;
+        } else {
+          multiplier = playerScore.x / playerScore.y;
+        }
+        player1.animationTimer += 1;
+        minigameMode = false;
+        InitGame();
+        playerDied = 0;
+      }
     } else {
       float dt = GetFrameTime();
       player2.cooldownTimer += 150 * dt;
@@ -241,8 +250,9 @@ int main() {
       // Draw
       //----------------------------------------------------------------------------------
       BeginDrawing();
-
-      if (player2.hp <= 0) {
+      if (minigameMode == true) {
+        minigameMode = true;
+      } else if (player2.hp <= 0) {
         DrawText("PLAYER 1 WINS", 28, screenHeight / 2.5, 90, RED);
       } else if (player1.hp <= 0) {
         DrawText("PLAYER 2 WINS", 28, screenHeight / 2.5, 90, RED);
@@ -280,45 +290,41 @@ int main() {
             break;
           }
           DrawPlayerAnimation(&player1, 3, false);
-          if (IsKeyDown(KEY_V)) {
-            if (player1.frameCounter < 15) {
-              if (player1.animationTimer > 1) {
-                player1.frameCounter++;
-                player1.animationTimer = 0;
-              } else {
-                player1.animationTimer++;
-              }
-            } else if (player1.frameCounter == 15) {
-              if (player1.animationTimer > 100) {
-                player1.animation = 0;
-                player1.frameCounter = 0;
-                player1.animationTimer = 0;
-                player1.mana = 0;
-                DrawPlayerAnimation(&player1, 0, false);
-              } else {
-                ImageResizeNN(&laserBeam,
-                              player2.collider.x - player1.collider.x,
-                              SPRITE_SIZE);
-                Texture2D laserBeamTexture = LoadTextureFromImage(laserBeam);
-                DrawTexturePro(
-                    laserBeamTexture,
-                    (Rectangle){0, 0, player2.collider.x - player1.collider.x,
-                                SPRITE_SIZE},
-                    (Rectangle){
-                        player1.collider.x + SPRITE_SIZE, player1.collider.y,
-                        player2.collider.x - player1.collider.x - SPRITE_SIZE,
-                        SPRITE_SIZE},
-                    (Vector2){0, 0}, 0.0f, WHITE);
-
-                player1.animationTimer++;
-                player2.hp -= 0.5;
-              }
+          if (player1.frameCounter < 15) {
+            if (player1.animationTimer > 1) {
+              player1.frameCounter++;
+              player1.animationTimer = 0;
+            } else {
+              player1.animationTimer++;
             }
-          } else {
-            player1.animation = 0;
-            player1.frameCounter = 0;
-            player1.animationTimer = 0;
-            DrawPlayerAnimation(&player1, 0, false);
+          } else if (player1.frameCounter == 15) {
+            if (player1.animationTimer > 100) {
+              player1.animation = 0;
+              player1.frameCounter = 0;
+              player1.animationTimer = 0;
+              player1.mana = 0;
+              DrawPlayerAnimation(&player1, 0, false);
+            }
+            if (player1.animationTimer == 0) {
+              minigameMode = true;
+            } else {
+              ImageResizeNN(&laserBeam,
+                            player2.collider.x - player1.collider.x + 1,
+                            SPRITE_SIZE);
+              Texture2D laserBeamTexture = LoadTextureFromImage(laserBeam);
+              DrawTexturePro(
+                  laserBeamTexture,
+                  (Rectangle){0, 0, player2.collider.x - player1.collider.x,
+                              SPRITE_SIZE},
+                  (Rectangle){
+                      player1.collider.x + SPRITE_SIZE, player1.collider.y,
+                      player2.collider.x - player1.collider.x - SPRITE_SIZE,
+                      SPRITE_SIZE},
+                  (Vector2){0, 0}, 0.0f, WHITE);
+
+              player1.animationTimer++;
+              player2.hp -= 0.5 * multiplier;
+            }
           }
           break;
         default:
@@ -340,10 +346,27 @@ int main() {
           HandlePlayerAnimation(&player2, &player1, 6, 7, 0, 0, 0, 0, 0, 2,
                                 true);
           break;
-        // case 4:
-        //   HandlePlayerAnimation(&player2, &player1, 4, 16, 2000, 50, -150,
-        //   -90, 3,
-        //                         true);
+        case 4:
+          if (player2.mana < 100) {
+            player2.animation = 0;
+            DrawPlayerAnimation(&player2, 0, true);
+          } else {
+            if ((player2Collider.x - player1Collider.x - 48) <= 0) {
+              printf("\033[31;1;4m%f\033[0m \n",
+                     player2Collider.x - player1Collider.x - 48);
+              break;
+            } else {
+              ImageResizeNN(&laserBeam,
+                            player2Collider.x - player1Collider.x - 48,
+                            SPRITE_SIZE);
+            }
+            Texture2D laserBeamTexture = LoadTextureFromImage(laserBeam);
+            DrawTexture(laserBeamTexture,
+                        player2.collider.x - laserBeamTexture.width,
+                        player2.collider.y, WHITE);
+            UnloadTexture(laserBeamTexture);
+          }
+
         default:
           DrawPlayerAnimation(&player2, 0, true);
           break;
@@ -360,12 +383,6 @@ int main() {
         DrawRectangleLines(50, 50 + 11, 81, 5, GRAY);
         DrawRectangleLines(screenWidth - 50 - 80, 50 + 11, 100 / 1.22, 5, GRAY);
 
-        // RLAPI void DrawRectangleGradientH(int posX, int posY, int width, int
-        // height, Color left, Color right);   // Draw a
-        // horizontal-gradient-filled rectangle RLAPI void
-        // RLAPI void DrawRectangleLines(int posX, int
-        // posY, int width, int height, Color color);                   // Draw
-        // rectangle outline
         DrawRectangleGradientH(50, 50 + 11, player1.mana / 1.249, 4,
                                (Color){57, 8, 255, 100}, BLUE);
         DrawRectangleGradientH(screenWidth - 50 - 80, 50 + 11,
@@ -416,10 +433,10 @@ Vector2 keyDetection(KeyboardKey leftKey, KeyboardKey rightKey,
                      KeyboardKey kickKey, KeyboardKey specialKey,
                      Player *player) {
   if (IsKeyDown(leftKey)) {
-    player->acceleration.x += 2;
+    player->acceleration.x += 3;
   }
   if (IsKeyDown(rightKey)) {
-    player->acceleration.x -= 2;
+    player->acceleration.x -= 3;
   }
   if (IsKeyDown(jumpKey) && player->isGrounded && player->animation != 3) {
     player->animation = 3;
