@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include <stdbool.h>
+#include <stdio.h>
 
 #define SNAKE_LENGTH 256
 #define SQUARE_SIZE 15
@@ -25,34 +26,63 @@ static const int screenHeight = 450;
 
 static int frameCounter = 0;
 
-static bool gameOver = false;
 static bool pause = false;
 static Food fruit = {0};
-static Snake snake[SNAKE_LENGTH] = {0};
-static Vector2 snakePosition[SNAKE_LENGTH] = {0};
-static bool allowMove = false;
-static Vector2 offset = {0};
-static int counterTail = 2;
+static int playerDied =
+    0; // where 1 means player1 died, 2 means player2 died,3 means both players
+       // died and 0 means game is in progress
+
+static Snake snake1[SNAKE_LENGTH] = {0};
+static Vector2 snake1Position[SNAKE_LENGTH] = {0};
+static bool allowMoveSnake1 = false;
+static Vector2 offsetSnake1 = {0};
+static int counterTailSnake1 = 2;
+
+static Snake snake2[SNAKE_LENGTH] = {0};
+static Vector2 snake2Position[SNAKE_LENGTH] = {0};
+static int counterTailSnake2 = 2;
+static Vector2 offsetSnake2 = {0};
+static bool allowMoveSnake2 = false;
 
 void InitGame(void) {
   frameCounter = 0;
-  counterTail = 2;
-  offset.x = screenWidth % SQUARE_SIZE;
-  offset.y = screenHeight % SQUARE_SIZE;
+  counterTailSnake1 = 2;
+  offsetSnake1.x = screenWidth % SQUARE_SIZE;
+  offsetSnake1.y = screenHeight % SQUARE_SIZE;
+
+  offsetSnake2.x = screenWidth % SQUARE_SIZE;
+  offsetSnake2.y = screenHeight % SQUARE_SIZE;
 
   for (int i = 0; i < SNAKE_LENGTH; i++) {
-    snake[i].position = (Vector2){offset.x / 2, offset.y / 2};
-    snake[i].size = (Vector2){SQUARE_SIZE, SQUARE_SIZE};
-    snake[i].speed = (Vector2){SQUARE_SIZE, 0};
+    snake1[i].position = (Vector2){offsetSnake1.x / 2, offsetSnake1.y / 2};
+    snake1[i].size = (Vector2){SQUARE_SIZE, SQUARE_SIZE};
+    snake1[i].speed = (Vector2){SQUARE_SIZE, 0};
 
     if (i == 0)
-      snake[i].color = GREEN;
+      snake1[i].color = GREEN;
 
     else
-      snake[i].color = LIME;
+      snake1[i].color = LIME;
   }
   for (int i = 0; i < SNAKE_LENGTH; i++) {
-    snakePosition[i] = (Vector2){0.0f, 0.0f};
+    snake1Position[i] = (Vector2){0.0f, 0.0f};
+  }
+
+  for (int i = 0; i < SNAKE_LENGTH; i++) {
+    snake2[i].position = (Vector2){offsetSnake2.x / 2, offsetSnake2.y / 2};
+    snake2[i].size = (Vector2){SQUARE_SIZE, SQUARE_SIZE};
+    snake2[i].speed = (Vector2){SQUARE_SIZE, 0};
+
+    if (i == 0)
+      snake2[i].color = BLUE;
+    else
+      snake2[i].color = SKYBLUE;
+  }
+  for (int i = 0; i < SNAKE_LENGTH; i++) {
+    snake1Position[i] = (Vector2){0.0f, 0.0f};
+  }
+  for (int i = 0; i < SNAKE_LENGTH; i++) {
+    snake2Position[i] = (Vector2){0.0f, 0.0f};
   }
 
   fruit.size = (Vector2){SQUARE_SIZE, SQUARE_SIZE};
@@ -61,56 +91,103 @@ void InitGame(void) {
 }
 
 void UpdateGame(void) {
-  if (!gameOver) {
+  if (playerDied != 3) {
     if (IsKeyPressed('P'))
       pause = !pause;
 
     if (!pause) {
       // Player control
-      if (IsKeyPressed(KEY_D) && (snake[0].speed.x == 0) && allowMove) {
-        snake[0].speed = (Vector2){SQUARE_SIZE, 0};
-        allowMove = false;
+      if (IsKeyPressed(KEY_D) && (snake1[0].speed.x == 0) && allowMoveSnake1) {
+        snake1[0].speed = (Vector2){SQUARE_SIZE, 0};
+        allowMoveSnake1 = false;
       }
-      if (IsKeyPressed(KEY_A) && (snake[0].speed.x == 0) && allowMove) {
-        snake[0].speed = (Vector2){-SQUARE_SIZE, 0};
-        allowMove = false;
+      if (IsKeyPressed(KEY_A) && (snake1[0].speed.x == 0) && allowMoveSnake1) {
+        snake1[0].speed = (Vector2){-SQUARE_SIZE, 0};
+        allowMoveSnake1 = false;
       }
-      if (IsKeyPressed(KEY_W) && (snake[0].speed.y == 0) && allowMove) {
-        snake[0].speed = (Vector2){0, -SQUARE_SIZE};
-        allowMove = false;
+      if (IsKeyPressed(KEY_W) && (snake1[0].speed.y == 0) && allowMoveSnake1) {
+        snake1[0].speed = (Vector2){0, -SQUARE_SIZE};
+        allowMoveSnake1 = false;
       }
-      if (IsKeyPressed(KEY_S) && (snake[0].speed.y == 0) && allowMove) {
-        snake[0].speed = (Vector2){0, SQUARE_SIZE};
-        allowMove = false;
+      if (IsKeyPressed(KEY_S) && (snake1[0].speed.y == 0) && allowMoveSnake1) {
+        snake1[0].speed = (Vector2){0, SQUARE_SIZE};
+        allowMoveSnake1 = false;
       }
 
-      // Snake movement
-      for (int i = 0; i < counterTail; i++)
-        snakePosition[i] = snake[i].position;
+      if (IsKeyPressed(KEY_RIGHT) && (snake2[0].speed.x == 0) &&
+          allowMoveSnake2) {
+        snake2[0].speed = (Vector2){SQUARE_SIZE, 0};
+        allowMoveSnake2 = false;
+      }
+      if (IsKeyPressed(KEY_LEFT) && (snake2[0].speed.x == 0) &&
+          allowMoveSnake2) {
+        snake2[0].speed = (Vector2){-SQUARE_SIZE, 0};
+        allowMoveSnake2 = false;
+      }
+      if (IsKeyPressed(KEY_UP) && (snake2[0].speed.y == 0) && allowMoveSnake2) {
+        snake2[0].speed = (Vector2){0, -SQUARE_SIZE};
+        allowMoveSnake2 = false;
+      }
+      if (IsKeyPressed(KEY_DOWN) && (snake2[0].speed.y == 0) &&
+          allowMoveSnake2) {
+        snake2[0].speed = (Vector2){0, SQUARE_SIZE};
+        allowMoveSnake2 = false;
+      }
 
-      if ((frameCounter % 10) == 0) {
-        for (int i = 0; i < counterTail; i++) {
+      // snake1 movement
+      for (int i = 0; i < counterTailSnake1; i++)
+        snake1Position[i] = snake1[i].position;
+
+      if ((frameCounter % 2) == 0) {
+        for (int i = 0; i < counterTailSnake1; i++) {
           if (i == 0) {
-            snake[0].position.x += snake[0].speed.x;
-            snake[0].position.y += snake[0].speed.y;
-            allowMove = true;
+            snake1[0].position.x += snake1[0].speed.x;
+            snake1[0].position.y += snake1[0].speed.y;
+            allowMoveSnake1 = true;
           } else
-            snake[i].position = snakePosition[i - 1];
+            snake1[i].position = snake1Position[i - 1];
+        }
+      }
+
+      for (int i = 0; i < counterTailSnake2; i++)
+        snake2Position[i] = snake2[i].position;
+
+      if ((frameCounter % 2) == 0) {
+        for (int i = 0; i < counterTailSnake2; i++) {
+          if (i == 0) {
+            snake2[0].position.x += snake2[0].speed.x;
+            snake2[0].position.y += snake2[0].speed.y;
+            allowMoveSnake2 = true;
+          } else
+            snake2[i].position = snake2Position[i - 1];
         }
       }
 
       // Wall behaviour
-      if (((snake[0].position.x) > (screenWidth - offset.x)) ||
-          ((snake[0].position.y) > (screenHeight - offset.y)) ||
-          (snake[0].position.x < 0) || (snake[0].position.y < 0)) {
-        gameOver = true;
+      if ((((snake1[0].position.x) > (screenWidth - offsetSnake1.x)) ||
+           ((snake1[0].position.y) > (screenHeight - offsetSnake1.y)) ||
+           (snake1[0].position.x < 0) || (snake1[0].position.y < 0)) &&
+          (playerDied < 1)) {
+        playerDied += 1;
+      }
+      if ((((snake2[0].position.x) > (screenWidth - offsetSnake2.x)) ||
+           ((snake2[0].position.y) > (screenHeight - offsetSnake2.y)) ||
+           (snake2[0].position.x < 0) || (snake2[0].position.y < 0)) &&
+          (playerDied < 2)) {
+        playerDied += 2;
       }
 
       // Collision with yourself
-      for (int i = 1; i < counterTail; i++) {
-        if ((snake[0].position.x == snake[i].position.x) &&
-            (snake[0].position.y == snake[i].position.y))
-          gameOver = true;
+      for (int i = 1; i < counterTailSnake1; i++) {
+        if ((snake1[0].position.x == snake1[i].position.x) &&
+            (snake1[0].position.y == snake1[i].position.y))
+          playerDied += 1;
+      }
+
+      for (int i = 1; i < counterTailSnake2; i++) {
+        if ((snake2[0].position.x == snake2[i].position.x) &&
+            (snake2[0].position.y == snake2[i].position.y))
+          playerDied += 2;
       }
 
       // Fruit position calculation
@@ -118,32 +195,43 @@ void UpdateGame(void) {
         fruit.active = true;
         fruit.position = (Vector2){
             GetRandomValue(0, (screenWidth / SQUARE_SIZE) - 1) * SQUARE_SIZE +
-                offset.x / 2,
+                offsetSnake1.x / 2,
             GetRandomValue(0, (screenHeight / SQUARE_SIZE) - 1) * SQUARE_SIZE +
-                offset.y / 2};
+                offsetSnake1.y / 2};
 
-        for (int i = 0; i < counterTail; i++) {
-          while ((fruit.position.x == snake[i].position.x) &&
-                 (fruit.position.y == snake[i].position.y)) {
+        for (int i = 0; i < counterTailSnake1; i++) {
+          while ((fruit.position.x == snake1[i].position.x) &&
+                 (fruit.position.y == snake1[i].position.y)) {
             fruit.position =
                 (Vector2){GetRandomValue(0, (screenWidth / SQUARE_SIZE) - 1) *
                                   SQUARE_SIZE +
-                              offset.x / 2,
+                              offsetSnake1.x / 2,
                           GetRandomValue(0, (screenHeight / SQUARE_SIZE) - 1) *
                                   SQUARE_SIZE +
-                              offset.y / 2};
+                              offsetSnake1.y / 2};
             i = 0;
           }
         }
       }
 
       // Collision
-      if ((snake[0].position.x < (fruit.position.x + fruit.size.x) &&
-           (snake[0].position.x + snake[0].size.x) > fruit.position.x) &&
-          (snake[0].position.y < (fruit.position.y + fruit.size.y) &&
-           (snake[0].position.y + snake[0].size.y) > fruit.position.y)) {
-        snake[counterTail].position = snakePosition[counterTail - 1];
-        counterTail += 1;
+      if ((snake1[0].position.x < (fruit.position.x + fruit.size.x) &&
+           (snake1[0].position.x + snake1[0].size.x) > fruit.position.x) &&
+          (snake1[0].position.y < (fruit.position.y + fruit.size.y) &&
+           (snake1[0].position.y + snake1[0].size.y) > fruit.position.y)) {
+        snake1[counterTailSnake1].position =
+            snake1Position[counterTailSnake1 - 1];
+        counterTailSnake1 += 1;
+        fruit.active = false;
+      }
+
+      if ((snake2[0].position.x < (fruit.position.x + fruit.size.x) &&
+           (snake2[0].position.x + snake2[0].size.x) > fruit.position.x) &&
+          (snake2[0].position.y < (fruit.position.y + fruit.size.y) &&
+           (snake2[0].position.y + snake2[0].size.y) > fruit.position.y)) {
+        snake2[counterTailSnake2].position =
+            snake2Position[counterTailSnake2 - 1];
+        counterTailSnake2 += 1;
         fruit.active = false;
       }
 
@@ -152,7 +240,7 @@ void UpdateGame(void) {
   } else {
     if (IsKeyPressed(KEY_ENTER)) {
       InitGame();
-      gameOver = false;
+      playerDied = 0;
     }
   }
 }
@@ -163,28 +251,42 @@ void DrawGame(void) {
 
   ClearBackground(RAYWHITE);
 
-  if (!gameOver) {
+  if (playerDied != 3) {
     // Draw grid lines
     for (int i = 0; i < screenWidth / SQUARE_SIZE + 1; i++) {
-      DrawLineV((Vector2){SQUARE_SIZE * i + offset.x / 2, offset.y / 2},
-                (Vector2){SQUARE_SIZE * i + offset.x / 2,
-                          screenHeight - offset.y / 2},
-                LIGHTGRAY);
+      DrawLineV(
+          (Vector2){SQUARE_SIZE * i + offsetSnake1.x / 2, offsetSnake1.y / 2},
+          (Vector2){SQUARE_SIZE * i + offsetSnake1.x / 2,
+                    screenHeight - offsetSnake1.y / 2},
+          LIGHTGRAY);
     }
 
     for (int i = 0; i < screenHeight / SQUARE_SIZE + 1; i++) {
       DrawLineV(
-          (Vector2){offset.x / 2, SQUARE_SIZE * i + offset.y / 2},
-          (Vector2){screenWidth - offset.x / 2, SQUARE_SIZE * i + offset.y / 2},
+          (Vector2){offsetSnake1.x / 2, SQUARE_SIZE * i + offsetSnake1.y / 2},
+          (Vector2){screenWidth - offsetSnake1.x / 2,
+                    SQUARE_SIZE * i + offsetSnake1.y / 2},
           LIGHTGRAY);
     }
 
-    // Draw snake
-    for (int i = 0; i < counterTail; i++)
-      DrawRectangleV(snake[i].position, snake[i].size, snake[i].color);
+    // Draw snake1
+    if (playerDied != 1)
+      for (int i = 0; i < counterTailSnake1; i++)
+        DrawRectangleV(snake1[i].position, snake1[i].size, snake1[i].color);
+
+    if (playerDied != 2)
+      for (int i = 0; i < counterTailSnake2; i++)
+        DrawRectangleV(snake2[i].position, snake2[i].size, snake2[i].color);
 
     // Draw fruit to pick
     DrawRectangleV(fruit.position, fruit.size, fruit.color);
+    char buff[50]; // Common buffer
+
+    sprintf(buff, "player 1 score: %d", counterTailSnake1 - 2);
+    DrawText(buff, 5, 5, 20, RED);
+
+    sprintf(buff, "player 2 score:  %d", counterTailSnake2 - 2);
+    DrawText(buff, screenWidth - 5 - 200, 5, 20, RED);
 
     if (pause)
       DrawText("GAME PAUSED",
@@ -199,22 +301,21 @@ void DrawGame(void) {
   EndDrawing();
 }
 
-// Unload game variables
-void UnloadGame(void) {
-  // TODO: Unload all dynamic loaded data (textures, sounds, models...)
-}
-
 // Update and Draw (one frame)
-void UpdateDrawFrame(void) {
+Vector2 UpdateDrawFrame(void) {
   UpdateGame();
   DrawGame();
+  if (playerDied == 3) {
+    return (Vector2){counterTailSnake1 - 2, counterTailSnake2 - 2};
+  }
+  return (Vector2){256, 256};
 }
 // int main() {
 //   SetTargetFPS(60);
 //   InitWindow(screenWidth, screenHeight, "snake");
 //   InitGame();
 //   while (!WindowShouldClose()) {
+//     printf("%d \n", playerDied);
 //     UpdateDrawFrame();
 //   }
-//   UnloadGame();
 // }
