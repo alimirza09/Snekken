@@ -1,6 +1,5 @@
 #include "raylib.h"
 #include "snake.c"
-// #include "snake.h"
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
